@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>不思議の国のモデルG診断 🃏☕️</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1><i class="fa-solid fa-hat-wizard"></i> Wonderland G-Tracker</h1>
+            <p id="instruction">アリスのように、直感のままに進んでね…</p>
+        </header>
+
+        <main id="main-area">
+            <!-- 最初に自認を入れるバー -->
+            <div id="setup-area">
+                <p>あなたの自認タイプを教えて（INTJ, LII-Ni, 5w6など）</p>
+                <input type="text" id="user-identity" placeholder="例：INTJ LII-Ni 5w6" class="input-bar">
+                <br>
+                <button id="start-btn" class="btn"><i class="fa-solid fa-key"></i> 扉を開ける</button>
+            </div>
+        </main>
+        <div id="log-display">
+            <span>行動ログ: </span><span id="live-log">ウサギを待機中...</span>
+        </div>
+    </div>
+
+    <!-- 🐛 早歩きするようになったLSI-Ni芋虫くん -->
+    <div id="caterpillar">🐛</div>
+    <div id="caterpillar-speech"></div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
