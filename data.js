@@ -1,93 +1,121 @@
 const appData = {
-    // 観測フェーズ（合計8個に増やしたよ！）
-    phases: [
-        { id: 'phase1', type: 'choice', title: '🃏 赤と黒', instruction: '惹かれるマークを選んでね。' },
-        { id: 'phase2', type: 'drag', title: '☕️ お茶会の準備', instruction: '3つのカップを好きな場所に配置して。' },
-        { id: 'phase3', type: 'clicker', title: '🐇 白ウサギを追え', instruction: '逃げ回るウサギを捕まえて！' },
-        { id: 'phase4', type: 'scale', title: '🍄 EAT ME / DRINK ME', instruction: 'キノコのサイズを調節して。' },
-        { id: 'phase5', type: 'sort', title: '♠️ トランプの整列', instruction: 'カードを好きなように動かして。' },
-        { id: 'phase6', type: 'boundary', title: '📏 心の境界線', instruction: 'あなた(左)とチェシャ猫(右)の間に境界線を引いて。' },
-        { id: 'phase7', type: 'hats', title: '🎩 帽子の選択', instruction: 'お茶会に被っていく帽子は？' },
-        { id: 'phase8', type: 'fix_clock', title: '⚙️ 壊れた時計', instruction: '3つの歯車を中央の時計に集めて！' },
-        { id: 'phase9', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: 'キノコの上にクッキー(座布団)を置いて、一番しっくりくる位置に微調整して。' },
-        { id: 'phase10', type: 'roses', title: '🌹 バラを赤く塗ろう', instruction: '白いバラをタップして赤く塗ってね。' },
-        { id: 'phase11', type: 'mirror', title: '🪞 鏡の国', instruction: '左右対称なペアをクリック！' },
-        { id: 'phase12', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '自由に撫でて軌跡を残して。' }
+    phases:[
+        { id: 'p1', type: 'choice', title: '🃏 赤と黒', instruction: '惹かれるマークを選んでね。' },
+        { id: 'p2', type: 'drag', title: '☕️ お茶会の準備', instruction: '3つのカップを配置して。' },
+        { id: 'p3', type: 'clicker', title: '🐇 白ウサギを追え', instruction: '逃げ回るウサギを捕まえて！(連打)' },
+        { id: 'p4', type: 'scale', title: '🍄 EAT ME / DRINK ME', instruction: 'キノコのサイズを調節して。' },
+        { id: 'p5', type: 'sort', title: '♠️ トランプの整列', instruction: 'カードを動かして。' },
+        { id: 'p6', type: 'darling', title: '💌 ダーリンからの手紙', instruction: '手紙が届いたよ。どうする？' },
+        { id: 'p7', type: 'telescope', title: '🔭 時間のピント', instruction: '望遠鏡のピントを合わせて覗いてみて。' },
+        { id: 'p8', type: 'chess', title: '♟️ 盤上の制圧', instruction: '相手のキング(♚)に対して、駒(♙)をどう配置する？' },
+        { id: 'p9', type: 'hats', title: '🎩 帽子の選択', instruction: 'お茶会に被っていく帽子は？' },
+        { id: 'p10', type: 'fix_clock', title: '⚙️ 壊れた時計', instruction: '3つの歯車を中央の時計に重ねて！' },
+        { id: 'p11', type: 'te_obstacle', title: '🪨 障害物の排除', instruction: '邪魔な岩を素早くゴミ箱(🗑️)に片付けて！' },
+        { id: 'p12', type: 'te_task', title: '📑 タスク処理', instruction: '1から5の数字を順番に素早くタップ！' },
+        { id: 'p13', type: 'se_attack', title: '⚔️ 兵士の撃退', instruction: '迫りくるトランプ兵を連打で押し返せ！' },
+        { id: 'p14', type: 'escape', title: '🏃‍♀️ 逃走劇', instruction: 'トランプ兵から5秒間マウスで逃げ切れ！' },
+        { id: 'p15', type: 'si_tea', title: '🍵 お茶の温度', instruction: 'バーが動くよ！「適温(緑)」の瞬間にストップ！' },
+        { id: 'p16', type: 'si_frame', title: '🖼️ 歪んだ額縁', instruction: 'ドラッグして、額縁の傾きを完全に真っ直ぐ(0度)に直して！' },
+        { id: 'p17', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: '座布団を一番しっくりくる位置に微調整して。' },
+        { id: 'p18', type: 'roses', title: '🌹 バラを赤く塗ろう', instruction: '白いバラをタップして赤く塗ってね。' },
+        { id: 'p19', type: 'boundary', title: '📏 心の境界線', instruction: 'チェシャ猫(🐱)との心の距離を決めて。(右端に追いやってもOK)' },
+        { id: 'p20', type: 'bgm', title: '🎶 お茶会の演出', instruction: 'ドラッグでBGMテンションを上げて空間を熱狂させて！' },
+        { id: 'p21', type: 'chaos', title: '🌀 狂気のお茶会', instruction: 'DRINK MEボタンを押してみて…' },
+        { id: 'p22', type: 'mirror', title: '🪞 鏡の国', instruction: '左右対称なペアをクリック！' },
+        { id: 'p23', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '自由に撫でて軌跡を残して。' }
     ],
 
-    // ソシオニクス16タイプ
     socionicsTypes: {
-        ILE: { name: "ILE (ENTp)", mission: "NeTe: 革新的な行動", desc: "大胆なアイデアや発明を見つけ出し、それを実現するエネルギー！" },
-        ESE: { name: "ESE (ESFj)", mission: "FeSe: 感情的な圧力", desc: "人々を新しいビジネスに巻き込み、熱気で無関心を克服する！" },
-        SEI: { name: "SEI (ISFp)", mission: "SiFi: 快適な関係", desc: "人々が心地よく、リラックスして交流できる環境を作り出す力🌸" },
-        LII: { name: "LII (INTj)", mission: "TiNi: 時間構造", desc: "イベントを分析し、システムの論理に従って行動する観察者✨" },
-        EIE: { name: "EIE (ENFj)", mission: "FeNe: エモーショナルなアイデア", desc: "能力発見への意欲を生み出し、アイデアのためにリスクを冒す！" },
-        SLE: { name: "SLE (ESTp)", mission: "SeTe: 力強い行動", desc: "過酷な競争の中でも果敢に行動する圧倒的制圧力！(芋虫クラッシャー🐛💥)" },
-        LSI: { name: "LSI (ISTj)", mission: "TiSi: 快適さの論理", desc: "快適さと安定をもたらす秩序とルールをつくる構築者⚙️" },
-        IEI: { name: "IEI (INFp)", mission: "NiFi: 関係性の時間", desc: "人間関係の発展を予測し、タイムリーに調整する調和の力🕰️" },
-        SEE: { name: "SEE (ESFp)", mission: "SeFe: 力強い感情", desc: "対立する当事者間の互恵的な合意を形成する外交エネルギー！" },
-        LIE: { name: "LIE (ENTj)", mission: "TeNe: 収益性の高いイノベーション", desc: "大きな利益が約束されたビジネスでリスクを冒す開拓者💰" },
-        ILI: { name: "ILI (INTp)", mission: "NiTi: システム予測", desc: "イベントの経過を予測し、システムのバランスを取る対策を講じる🔮" },
-        ESI: { name: "ESI (ISFj)", mission: "FiSi: 快適さの倫理", desc: "グループの身体的・心理的な健康を確保する守護者🛡️" },
-        LSE: { name: "LSE (ESTj)", mission: "TeSe: ビジネス力", desc: "領域内を移動し、問題や障害が発生した場所に即座に介入する！" },
-        IEE: { name: "IEE (ENFp)", mission: "NeFe: 興味深いコミュニケーション", desc: "面白い人たちと出会い、他者の才能を刺激して開花させる🌟" },
-        EII: { name: "EII (INFj)", mission: "FiNi: 時間の倫理", desc: "優しさと忍耐で、少しずつ世界に良い変化をもたらす癒やし手🌱" },
-        SLI: { name: "SLI (ISTp)", mission: "SiTi: 快適な要求", desc: "快適な状態でツールとメカニズムを完璧に管理・操作する🛠️" }
+        ILE: { name: "ILE (ENTp)", mission: "NeTe: 革新的な行動", desc: "【無数の可能性を現実のシステムに落とし込む発明家】\n大胆なアイデアを見つけ出し、それを実行するエネルギーの持ち主。既存のルールに縛られず、常に「もっと面白い方法」を探求し続けます。" },
+        ESE: { name: "ESE (ESFj)", mission: "FeSe: 感情的な圧力", desc: "【場の空気を熱狂で支配するパーティの主役】\n感情エネルギーを外部に放ち、周囲の人々を巻き込んでいく力があります。無関心な人すらもあなたの熱意で動かしてしまう、圧倒的な求心力を持っています。" },
+        SEI: { name: "SEI (ISFp)", mission: "SiFi: 快適な関係", desc: "【心と身体の平穏を作り出す調和のアーティスト】\n人々がリラックスして心地よく過ごせる環境を作り出す天才です。争いを避け、美味しいお茶と温かい関係性の中で、周囲に癒やしをもたらします。" },
+        LII: { name: "LII (INTj)", mission: "TiNi: 時間構造", desc: "【複雑な世界を論理の糸で解き明かす静かなる観察者】\n感情や常識に流されず、「それは構造的に正しいか？」を常に観察しています。現象を分析し、システムの論理に従ってマクロな法則を導き出す知性の持ち主です。" },
+        EIE: { name: "EIE (ENFj)", mission: "FeNe: エモーショナルなアイデア", desc: "【人々の心を揺さぶり、未来へ導くドラマチックな導き手】\n言葉や感情に強いエネルギーを乗せ、他者の眠れる可能性（才能）を引き出します。新しい理想のためにリスクを恐れず挑戦する情熱家です。" },
+        SLE: { name: "SLE (ESTp)", mission: "SeTe: 力強い行動", desc: "【障害を物理的に粉砕し、目標を奪取する制圧者】\n過酷な状況下でも決して怯まず、状況を見極めて最善の手で勝利を掴みます。目標達成のためには手段を選ばない、圧倒的な行動力と制圧力を持っています。" },
+        LSI: { name: "LSI (ISTj)", mission: "TiSi: 快適さの論理", desc: "【揺るぎない秩序とルールで世界を安定させる構築者】\n物事をあるべき場所に整頓し、快適で安定したシステムを作り上げます。不確実性を嫌い、一つ一つの事実を積み上げて強固な城を築きます。" },
+        IEI: { name: "IEI (INFp)", mission: "NiFi: 関係性の時間", desc: "【時の流れを読み、人の心をそっと繋ぐ夢想家】\n人間関係が未来にどう発展するかを無意識に予測し、絶妙なタイミングで調和をもたらします。争いを避け、精神的な理想を追い求めるロマンチストです。" },
+        SEE: { name: "SEE (ESFp)", mission: "SeFe: 力強い感情", desc: "【圧倒的な対人スキルで場を動かすカリスマ外交官】\n対立する人々の間に入り、感情的なエネルギーと政治力で互恵的な合意を形成します。空気を読みつつも自分の要求を通す、社会的な駆け引きの達人です。" },
+        LIE: { name: "LIE (ENTj)", mission: "TeNe: 収益性の高いイノベーション", desc: "【未来の利益を見越し、システムを最適化する開拓者】\n「それがどう役に立つか」を最重視し、常に動き回りながら大きな利益を生むビジネスを開拓します。無駄を嫌い、効率よく目標へ突き進みます。" },
+        ILI: { name: "ILI (INTp)", mission: "NiTi: システム予測", desc: "【破滅を予見し、未然に防ぐマクロな預言者】\n遥か先の未来を見通し、システムのバランスが崩れるポイントを的確に予測します。無駄な熱狂を避け、冷静に最適解だけを導き出す戦略家です。" },
+        ESI: { name: "ESI (ISFj)", mission: "FiSi: 快適さの倫理", desc: "【愛する者を守るため、善悪の境界線を引くガーディアン】\n大切な人の関係性と身体的・心理的な健康を何よりも重んじます。一度「敵」と見なしたものには容赦せず、静かですが非常に強固な個人的価値観を持っています。" },
+        LSE: { name: "LSE (ESTj)", mission: "TeSe: ビジネス力", desc: "【現場のトラブルを即座に鎮圧する頼れる現場監督】\n自分の領域内で起きた問題に対し、即座に介入して解決する圧倒的な実務能力の持ち主。働き者で、物事がスムーズに機能することを至上の喜びとします。" },
+        IEE: { name: "IEE (ENFp)", mission: "NeFe: 興味深いコミュニケーション", desc: "【人々の才能の種を見つけて花開かせるインスパイアラー】\n面白い人々や未知の可能性に惹かれ、コミュニケーションを通して他者のやる気を刺激します。一つの場所に縛られず、常に新しい繋がりを探し求めます。" },
+        EII: { name: "EII (INFj)", mission: "FiNi: 時間の倫理", desc: "【深い共感と忍耐で、世界を密かに癒やし続ける調停者】\n他者の痛みに寄り添い、少しずつ時間をかけて世界に良い変化をもたらします。争いを好まず、静かに自分の内なる道徳律に従って生きる癒やし手です。" },
+        SLI: { name: "SLI (ISTp)", mission: "SiTi: 快適な要求", desc: "【無駄を削ぎ落とし、完璧な心地よさを追求する職人】\n自分が快適に過ごせる環境を整え、ツールやメカニズムを完璧に管理します。大げさな感情表現は苦手ですが、自分の手で触れられる現実の質を極限まで高めます。" }
     },
 
-    // ガチの判定ロジック（みつき仕様）
-    // 🧠 心理機能ベースの判定ロジック
-// data.js の判定ロジック部分をこれに差し替えてね！
-// data.js の calculateType の中身をちょっと調整
-calculateType: function(logs) {
-    let scores = { Ti:0, Ne:0, Se:0, Ni:0, Te:0, Si:0, Fe:0, Fi:0 };
+    calculateType: function(logs) {
+        let scores = { Ti:0, Ne:0, Se:0, Ni:0, Te:0, Si:0, Fe:0, Fi:0 };
 
-    // --- Ti (論理) ---
-    if (logs.isAligned) scores.Ti += 15;
-    if (logs.mirrorCorrect > 0) scores.Ti += 5;
-    if (logs.choice === '🎩') scores.Ti += 5; // 文脈に合わせる判断
+        // ★ 迷った時間の判定強化 ★
+        if (logs.choiceTime > 2000) scores.Ti += 10; // 論理的な理由を考えた
+        if (logs.hoverTime > 3000) { scores.Fi += 10; scores.Ni += 10; } // 内なる価値観・予測の迷い
 
-    // --- Ni (時間・収束) ---
-    if (logs.hoverTime > 2500) scores.Ni += 12;
-    if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 7;
-    if (logs.choice === '🎩') scores.Ni += 5; // 概念的な一致
+        // Ti: 論理処理
+        if (logs.isAligned) scores.Ti += 15;
+        if (logs.mirrorCorrect > 0) scores.Ti += 10;
+        if (logs.letterAction === "drawer") scores.Ti += 20; 
+        if (logs.frameError === 0) scores.Ti += 15; 
 
-    // --- Ne (可能性) ---
-    if (logs.cupDrags > 8) scores.Ne += 8;
-    if (logs.bugClicks > 0 && logs.bugClicks < 20) scores.Ne += 8;
+        // Ni: 時間と予測
+        if (logs.niFocus >= 33 && logs.niFocus < 66) scores.Ni += 20; 
+        if (logs.niFocus >= 66) scores.Ni += 30; 
+        if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 10;
 
-    // --- Se (直接的行動) ---
-    if (logs.rabbitClicks > 4) scores.Se += 12;
-    if (logs.bugClicks >= 30) scores.Se += 100;
+        // Ne: 可能性とカオス
+        scores.Ne += Math.min(30, logs.chaosClicks * 4); 
+        scores.Ne += logs.cupDrags * 2;
+        if (logs.seChessDist > 50) scores.Ne += 10;
+        if (logs.escapeTime >= 5000) scores.Ne += 15; 
 
-    // --- Te (実用的効率) ---
-    if (logs.fixClockTime < 3000) scores.Te += 15; // 素早く修理完了
-    if (logs.sortDrags > 15) scores.Te += 5;
+        // Se: 制圧と見極め
+        scores.Se += Math.min(30, logs.rabbitClicks * 4); 
+        scores.Se += Math.min(30, logs.attackClicks * 3);
+        if (logs.seChessDist < 30) scores.Se += 20;
+        if (logs.escapeTime >= 5000) scores.Se += 15;
+        if (logs.bugClicks >= 30) scores.Se += 100;
 
-    // --- Fi (関係・距離感) ---
-    // 境界線の位置。アリス(左)に近いほどFi+、遠いほどFi-（客観的）
-    if (logs.boundaryX > 0) {
-        if (logs.boundaryX < 150) scores.Fi += 15; // 近距離(親密)
-        else scores.Fi += 5; // 遠距離(礼儀)
+        // Te: 効率
+        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime/300)); 
+        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime/300));
+        if (logs.taskTime > 0 && logs.taskTime < 3000) scores.Te += 25; 
+        else if (logs.taskTime > 0) scores.Te += 10;
+        if (logs.letterAction === "ignored") scores.Te += 15;
+
+        // Si: 快適さと微調整
+        scores.Si += Math.min(20, logs.siMicroMovements * 3); 
+        if (logs.teaError <= 3) scores.Si += 25; 
+        else if (logs.teaError <= 10) scores.Si += 10;
+        if (Math.abs(logs.frameError) <= 2) scores.Si += 15; 
+        if (logs.niFocus < 33) scores.Si += 15; 
+
+        // Fi: 個人的価値と防衛
+        if (logs.rosesPainted === 1) scores.Fi += 20; 
+        if (logs.letterAction === "trashed") scores.Fi += 25; 
+        if (logs.choice === '👒') scores.Fi += 15;
+        if (logs.boundaryAction === 'drawn' && logs.boundaryX < 150) scores.Fi += 20; 
+
+        // Fe: 感情の彩りと融合
+        scores.Fe += Math.floor(logs.bgmVolume * 0.4); 
+        if (logs.rosesPainted > 2) scores.Fe += (logs.rosesPainted * 5);
+        if (logs.boundaryAction === 'melted') scores.Fe += 25; 
+        if (logs.boundaryAction === 'removed') { scores.Fe += 15; scores.Ne += 10; } 
+
+        const missionMap = {
+            "ILE":["Ne", "Te"], "ESE": ["Fe", "Se"], "SEI":["Si", "Fi"], "LII":["Ti", "Ni"],
+            "EIE":["Fe", "Ne"], "SLE":["Se", "Te"], "LSI":["Ti", "Si"], "IEI":["Ni", "Fi"],
+            "SEE":["Se", "Fe"], "LIE":["Te", "Ne"], "ILI": ["Ni", "Ti"], "ESI":["Fi", "Si"],
+            "LSE":["Te", "Se"], "IEE": ["Ne", "Fe"], "EII":["Fi", "Ni"], "SLI": ["Si", "Ti"]
+        };
+
+        let maxScore = -1; let bestType = "LII"; let bestPair = "";
+        for (const [type, funcs] of Object.entries(missionMap)) {
+            const currentScore = (scores[funcs[0]] * 1.5) + scores[funcs[1]]; 
+            if (currentScore > maxScore) { maxScore = currentScore; bestType = type; bestPair = `${funcs[0]}-${funcs[1]}`; }
+        }
+
+        if (logs.bugClicks >= 30) { bestType = "SLE"; bestPair = "Se-Te"; }
+
+        return { key: bestType, scores: scores, topPair: bestPair };
     }
-    if (logs.choice === '👒') scores.Fi += 10; // 自分の好みで選ぶ(Fi)
-
-    // --- Si / Fe はバラ塗りやカップ配置で加算 ---
-
-    // 判定
-    let sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
-    let top1 = sorted[0][0];
-    let top2 = sorted[1][0];
-    return { key: this.getGType(top1, top2), scores: scores, topPair: `${top1}-${top2}` };
-},
-
-getGType: function(t1, t2) {
-    const map = {
-        "Ti-Ni": "LII", "Ti-Si": "LSI", "Ni-Ti": "ILI", "Ni-Fi": "IEI",
-        "Ne-Te": "ILE", "Ne-Fe": "IEE", "Se-Te": "SLE", "Se-Fe": "SEE",
-        "Te-Ne": "LIE", "Te-Se": "LSE", "Fe-Ne": "EIE", "Fe-Se": "ESE",
-        "Fi-Ni": "EII", "Fi-Si": "ESI", "Si-Ti": "SLI", "Si-Fi": "SEI"
-    };
-    return map[`${t1}-${t2}`] || "LII";
-}
 };
