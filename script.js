@@ -1,310 +1,226 @@
-// --- 1. 変数・定数の定義 ---
 const tracker = {
     userIdentity: "", cupDrags: 0, choiceTime: 0, hoverTime: 0,
     rabbitClicks: 0, bugClicks: 0, scaleGrow: 0, scaleShrink: 0,
     sortDrags: 0, rosesPainted: 0, isAligned: false,
-    boundaryX: 0, fixClockTime: 0, siMicroMovements: 0,
-    mirrorCorrect: 0, choice: "", startTime: 0, drawDistance: 0
+    fixClockTime: 0, obstacleTime: 0, attackClicks: 0,
+    escapeTime: 0, taskTime: 0, teaError: 100,
+    siMicroMovements: 0, mirrorCorrect: 0, frameError: 100, 
+    choice: "", drawDistance: 0, chaosClicks: 0, teaTime: 0,
+    letterAction: "ignored", niFocus: 50, seChessDist: 0, 
+    boundaryX: 200, boundaryAction: "drawn", bgmVolume: 50,
+    startTime: 0
 };
 
-let currentPhaseIndex = -1; 
-let randomizedPhases = [];  
-let activeIntervals = [];
-
+let currentPhaseIndex = -1; let randomizedPhases =[]; let activeIntervals =[];
 const mainArea = document.getElementById('main-area');
 const instruction = document.getElementById('instruction');
 const liveLog = document.getElementById('live-log');
+const progressCounter = document.getElementById('progress-counter');
 
-function updateLog(text) { if(liveLog) liveLog.textContent = text; }
+function updateLog(text) { if(liveLog) liveLog.textContent = "行動ログ: " + text; }
 
-// --- 2. 進行制御 ---
+// 最初に戻るボタンを生成しておく（非表示）
+const backBtn = document.createElement('button');
+backBtn.innerHTML = '◀ 戻る';
+backBtn.style.cssText = "position:absolute; top:10px; left:10px; background:transparent; border:none; color:var(--text-dark); cursor:pointer; font-weight:bold; z-index:100; display:none;";
+backBtn.onclick = prevPhase;
+document.getElementById('app-container').appendChild(backBtn);
+
+// 開始ボタンの処理
 document.getElementById('start-btn').addEventListener('click', () => {
     const input = document.getElementById('user-identity');
     tracker.userIdentity = input ? input.value : "";
-    randomizedPhases = [...appData.phases].sort(() => Math.random() - 0.5);
+    randomizedPhases =[...appData.phases].sort(() => Math.random() - 0.5);
+    
+    // エラー対策：EXITボタンがあれば消す
+    const exitBtn = document.getElementById('exit-btn');
+    if(exitBtn) exitBtn.style.display = 'none';
+    
     nextPhase();
 });
 
-function clearAllIntervals() {
-    activeIntervals.forEach(clearInterval);
-    activeIntervals = [];
+function clearAllIntervals() { 
+    activeIntervals.forEach(id => { clearInterval(id); clearTimeout(id); }); 
+    activeIntervals =[]; document.body.style.transform = ''; document.body.style.filter = ''; 
 }
 
 function nextPhase() {
-    clearAllIntervals();
-    currentPhaseIndex++;
+    clearAllIntervals(); currentPhaseIndex++;
+    if (currentPhaseIndex >= randomizedPhases.length) { showResult(); return; }
+    loadPhase();
+}
 
-    if (currentPhaseIndex >= randomizedPhases.length) {
-        showResult();
-        return;
-    }
+function prevPhase() {
+    if(currentPhaseIndex > 0) { clearAllIntervals(); currentPhaseIndex--; loadPhase(); }
+}
 
+function loadPhase() {
+    backBtn.style.display = 'block';
+    if(progressCounter) progressCounter.textContent = `${currentPhaseIndex + 1} / ${randomizedPhases.length}`;
+    
     const phase = randomizedPhases[currentPhaseIndex];
     instruction.textContent = phase.instruction;
     document.querySelector('h1').innerHTML = phase.title;
-    mainArea.innerHTML = '';
-    tracker.startTime = Date.now();
+    mainArea.innerHTML = ''; tracker.startTime = Date.now();
 
-    const setupFunctions = {
-        'choice': setupChoicePhase,
-        'drag': setupDragPhase,
-        'clicker': setupClickerPhase,
-        'scale': setupScalePhase,
-        'sort': setupSortPhase,
-        'boundary': setupBoundaryPhase,
-        'hats': setupHatsPhase,
-        'fix_clock': setupFixClockPhase,
-        'si_cushion': setupSiCushionPhase,
-        'roses': setupRosesPhase,
-        'mirror': setupMirrorPhase,
-        'draw': setupDrawPhase
+    const setups = {
+        'choice': setupChoicePhase, 'drag': setupDragPhase, 'clicker': setupClickerPhase,
+        'scale': setupScalePhase, 'sort': setupSortPhase, 'darling': setupDarlingPhase,
+        'telescope': setupTelescopePhase, 'chess': setupChessPhase, 'hats': setupHatsPhase, 
+        'fix_clock': setupFixClockPhase, 'te_obstacle': setupTeObstaclePhase, 
+        'te_task': setupTeTaskPhase, 'se_attack': setupSeAttackPhase, 'escape': setupEscapePhase, 
+        'si_tea': setupSiTeaPhase, 'si_frame': setupSiFramePhase,
+        'si_cushion': setupSiCushionPhase, 'roses': setupRosesPhase, 
+        'boundary': setupBoundaryPhase, 'bgm': setupBgmPhase, 'chaos': setupChaosPhase,
+        'mirror': setupMirrorPhase, 'draw': setupDrawPhase
     };
-
-    if (setupFunctions[phase.type]) {
-        setupFunctions[phase.type]();
-    }
+    if (setups[phase.type]) setups[phase.type]();
 }
 
-// --- 3. ユーティリティ ---
-function makeDraggable(el, area, onDrag) {
+function makeDraggable(el, area, onGrab, onDrop) {
     let isDragging = false;
-    el.onmousedown = (e) => {
-        isDragging = true;
-        if(onDrag) onDrag();
-    };
-    const doDrag = (e) => {
+    el.onmousedown = () => { isDragging = true; if(onGrab) onGrab(); };
+    const stopDrag = () => { if(isDragging && onDrop) onDrop(); isDragging = false; };
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('mousemove', (e) => {
         if (isDragging) {
             const r = area.getBoundingClientRect();
-            el.style.left = (e.clientX - r.left - 25) + 'px';
-            el.style.top = (e.clientY - r.top - 25) + 'px';
+            el.style.left = (e.clientX - r.left - 25) + 'px'; el.style.top = (e.clientY - r.top - 25) + 'px';
         }
-    };
-    const stopDrag = () => { isDragging = false; };
-    document.addEventListener('mousemove', doDrag);
-    document.addEventListener('mouseup', stopDrag);
+    });
 }
 
-/* ==================================
-   🐛 芋虫ギミック
-================================== */
-const bug = document.getElementById('caterpillar');
-const speech = document.getElementById('caterpillar-speech');
-let bugPos = -100;
-let bugMoving = false;
+function checkCollision(el1, el2) {
+    const r1 = el1.getBoundingClientRect(); const r2 = el2.getBoundingClientRect();
+    return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+}
 
+/* ================== 各フェーズの関数（全て網羅！） ================== */
+
+function setupTeTaskPhase() { const a=document.createElement('div'); a.className='play-area'; let t=1; const sT=Date.now(); for(let i=1;i<=5;i++){ const b=document.createElement('div'); b.textContent=i; b.style.cssText=`position:absolute; width:40px; height:40px; background:#2c3e50; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; cursor:pointer; left:${10+Math.random()*70}%; top:${10+Math.random()*70}%;`; b.onclick=()=>{ if(i===t){ b.style.background='#d32f2f'; b.style.pointerEvents='none'; t++; updateLog(`タスク: ${i}/5`); if(t>5){ tracker.taskTime=Date.now()-sT; updateLog(`完了: ${tracker.taskTime}ms`); activeIntervals.push(setTimeout(nextPhase,500)); } } }; a.appendChild(b); } mainArea.appendChild(a); }
+
+function setupSiTeaPhase() { const a=document.createElement('div'); a.className='play-area'; const l=document.createElement('p'); l.innerHTML='🍵 お茶の温度<br><span style="font-size:0.7rem;">「適温(緑)」の瞬間にストップ！</span>'; const t=document.createElement('div'); t.style.cssText="width:80%; height:20px; background:linear-gradient(to right, #cce5ff 0%, #cce5ff 45%, #ccffcc 48%, #ccffcc 52%, #ffcccc 55%, #ffcccc 100%); border-radius:10px; margin:40px auto; position:relative; overflow:hidden;"; const th=document.createElement('div'); th.style.cssText="width:10px; height:30px; background:#333; position:absolute; top:-5px; left:0%;"; let p=0; let d=2; let iv=setInterval(()=>{ p+=d; if(p>95){ p=95; d=-2-Math.random(); } if(p<0){ p=0; d=2+Math.random(); } th.style.left=p+'%'; },20); activeIntervals.push(iv); t.appendChild(th); a.append(l,t); const btn=document.createElement('button'); btn.className='btn'; btn.textContent='ストップ！'; btn.onclick=()=>{ clearInterval(iv); tracker.teaError=Math.abs(p-50); updateLog(`誤差: ${tracker.teaError.toFixed(1)}%`); btn.onclick=null; activeIntervals.push(setTimeout(nextPhase,1000)); }; mainArea.appendChild(a); mainArea.appendChild(btn); }
+
+function setupBoundaryPhase() { const a=document.createElement('div'); a.className='play-area'; a.style.background='linear-gradient(to right, #ffe6f2, #e6f2ff)'; const al=document.createElement('div'); al.textContent='👱‍♀️'; al.className='item'; al.style.left='10%'; al.style.top='40%'; const c=document.createElement('div'); c.textContent='🐱'; c.className='item'; c.style.right='10%'; c.style.top='40%'; const cs=document.createElement('div'); cs.style.cssText="position:absolute; right:15%; top:15%; background:white; padding:5px 10px; border-radius:10px; font-size:0.8rem; border:2px solid #555; opacity:0; transition:0.3s;"; const l=document.createElement('div'); l.style.cssText="position:absolute; width:10px; height:100%; background:rgba(211,47,47,0.5); left:50%; cursor:col-resize; border-left:2px dashed red;"; let isD=false; l.onmousedown=()=>isD=true; document.addEventListener('mouseup',()=>{ isD=false; cs.style.opacity='0'; }); document.addEventListener('mousemove',(e)=>{ if(isD){ const r=a.getBoundingClientRect(); let x=e.clientX-r.left; if(x<0) x=0; if(x>r.width) x=r.width; l.style.left=x+'px'; tracker.boundaryX=x; if(x>r.width*0.85){ tracker.boundaryAction='removed'; cs.textContent="境界なんて無かったんだねぇ。"; }else{ tracker.boundaryAction='drawn'; if(x>r.width*0.7) cs.textContent="そんなに近づいて…僕に食べられちゃってもいいのかい？"; else if(x<r.width*0.3) cs.textContent="おや…随分と警戒してるねぇ…ヒヒヒ。"; else cs.textContent="ここは誰の領土だい？"; } updateLog(`境界線: ${Math.round(x)}px`); cs.style.opacity='1'; } }); a.append(al,cs,c,l); const btnA=document.createElement('div'); btnA.style.marginTop='10px'; const b1=document.createElement('button'); b1.className='btn'; b1.textContent='ここで決める'; b1.onclick=nextPhase; const b2=document.createElement('button'); b2.className='btn'; b2.textContent='境界線を溶かす'; b2.style.background='#ff99c2'; b2.style.color='#fff'; b2.style.marginLeft='10px'; b2.onclick=()=>{ l.style.display='none'; tracker.boundaryAction='melted'; updateLog('境界が溶けた'); activeIntervals.push(setTimeout(nextPhase,1000)); }; btnA.append(b1,b2); mainArea.appendChild(a); mainArea.appendChild(btnA); }
+
+function setupEscapePhase() { const a=document.createElement('div'); a.className='play-area'; a.style.overflow='hidden'; a.style.cursor='none'; const al=document.createElement('div'); al.textContent='👱‍♀️'; al.style.cssText="position:absolute; font-size:3rem; pointer-events:none; transition:0.05s;"; const en=document.createElement('div'); en.textContent='🃏'; en.style.cssText="position:absolute; font-size:4rem; left:80%; top:50%; pointer-events:none; transition:0.1s;"; let ax=50,ay=50,ex=300,ey=100; a.addEventListener('mousemove',(e)=>{ const r=a.getBoundingClientRect(); ax=e.clientX-r.left-20; ay=e.clientY-r.top-20; al.style.left=ax+'px'; al.style.top=ay+'px'; }); const sT=Date.now(); let cght=false; const iv=setInterval(()=>{ if(cght) return; const dx=ax-ex; const dy=ay-ey; const dist=Math.sqrt(dx*dx+dy*dy); if(dist<40){ cght=true; tracker.escapeTime=Date.now()-sT; updateLog(`捕まった...: ${tracker.escapeTime}ms`); clearInterval(iv); a.style.cursor='default'; activeIntervals.push(setTimeout(nextPhase,1000)); }else{ ex+=dx*0.06; ey+=dy*0.06; en.style.left=ex+'px'; en.style.top=ey+'px'; if(Date.now()-sT>5000){ cght=true; tracker.escapeTime=5000; updateLog("逃げ切った！"); clearInterval(iv); a.style.cursor='default'; activeIntervals.push(setTimeout(nextPhase,1000)); } } },50); activeIntervals.push(iv); a.append(al,en); mainArea.appendChild(a); }
+
+function setupTelescopePhase() { const a = document.createElement('div'); a.className = 'play-area'; a.style.transition = 'background 0.5s'; const bg = document.createElement('div'); bg.style.cssText = "position:absolute; width:100%; height:100%; top:0; left:0; z-index:0; transition:all 0.5s; display:flex; align-items:center; justify-content:center; font-size:4rem; opacity:0;"; const v = document.createElement('p'); v.style.cssText = "position:relative; z-index:1; font-size:1.2rem; font-weight:bold; transition:color 0.5s;"; const s = document.createElement('input'); s.type = 'range'; s.min = '0'; s.max = '100'; s.value = '10'; s.style.cssText = "position:relative; z-index:1; width:80%; margin-top:40px;"; s.oninput = () => { tracker.niFocus = s.value; if(s.value < 33) { v.innerHTML = '今現在 (Si/Se)'; a.style.background = '#fff0f5'; v.style.color = '#333'; bg.innerHTML = '☕️🧁🫖'; bg.style.opacity = '0.8'; } else if(s.value < 66) { v.innerHTML = 'ミクロな未来構造 (LII的 Ni)'; a.style.background = '#e6f7ff'; v.style.color = '#333'; bg.innerHTML = '⚙️📐⏱️'; bg.style.opacity = '0.5'; } else { v.innerHTML = 'はるか遠い宇宙の崩壊 (ILI的 Ni)'; a.style.background = '#0a0a2a'; v.style.color = '#fff'; bg.innerHTML = '✨🌌☄️'; bg.style.opacity = '1'; } updateLog(`ピント: ${s.value}`); }; s.oninput(); a.append(bg, v, s); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '決定'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupSiFramePhase() { const a = document.createElement('div'); a.className = 'play-area'; a.style.display = 'flex'; a.style.justifyContent = 'center'; a.style.alignItems = 'center'; const f = document.createElement('div'); f.style.cssText = "width:150px; height:200px; border:15px solid #8b4513; background:url('https://www.transparenttextures.com/patterns/stardust.png') #fff; cursor:grab; box-shadow:5px 5px 15px rgba(0,0,0,0.3);"; let cA = (Math.random()>0.5?1:-1)*(15+Math.random()*15); f.style.transform = `rotate(${cA}deg)`; let isD = false, sY = 0; f.onmousedown = (e) => { isD = true; sY = e.clientY; f.style.cursor = 'grabbing'; }; document.addEventListener('mouseup', () => { isD = false; f.style.cursor = 'grab'; }); document.addEventListener('mousemove', (e) => { if(isD) { let d = (e.clientY - sY)*0.5; cA += d; f.style.transform = `rotate(${cA}deg)`; tracker.frameError = Math.abs(cA%360); sY = e.clientY; updateLog(`傾き調整中...`); } }); a.appendChild(f); const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'ヨシ！'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupBgmPhase() { const a = document.createElement('div'); a.className = 'play-area'; const l = document.createElement('p'); l.innerHTML = '🎶 BGMテンション'; const t = document.createElement('div'); t.style.cssText = "width:80%; height:20px; background:#ddd; border-radius:10px; margin:40px auto; position:relative;"; const th = document.createElement('div'); th.style.cssText = "width:30px; height:30px; background:var(--accent-red); border-radius:50%; position:absolute; top:-5px; left:50%; cursor:pointer;"; let isD = false; th.onmousedown = () => isD = true; document.addEventListener('mouseup', () => isD = false); document.addEventListener('mousemove', (e) => { if(isD) { const r = t.getBoundingClientRect(); let x = e.clientX - r.left; if(x < 0) x = 0; if(x > r.width) x = r.width; th.style.left = (x - 15) + 'px'; tracker.bgmVolume = Math.floor((x / r.width) * 100); updateLog(`演出熱量: ${tracker.bgmVolume}%`); } }); let iv = setInterval(() => { if(Math.random()*100 < tracker.bgmVolume) { let n = document.createElement('div'); n.textContent =['♪', '🎶', '🥳', '✨', '🎸'][Math.floor(Math.random()*5)]; n.style.cssText = `position:absolute; left:${Math.random()*90}%; bottom:10px; font-size:${Math.random()*2+1}rem; transition:all 1s ease-out; pointer-events:none;`; a.appendChild(n); setTimeout(() => { n.style.bottom = '100%'; n.style.opacity = '0'; }, 50); setTimeout(() => n.remove(), 1050); } }, 100); activeIntervals.push(iv); t.appendChild(th); a.append(l, t); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '決定'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupChaosPhase() { const a = document.createElement('div'); a.className = 'play-area'; const l = document.createElement('p'); l.innerHTML = 'DRINK ME...'; const bc = document.createElement('button'); bc.className = 'btn'; bc.textContent = '🧪 飲む'; bc.style.fontSize = '2rem'; bc.style.padding = '20px'; bc.onclick = () => { tracker.chaosClicks++; updateLog(`カオス度: ${tracker.chaosClicks}回`); document.body.style.transform = `rotate(${Math.random()*10-5}deg) scale(${1+Math.random()*0.1})`; document.body.style.filter = `hue-rotate(${Math.random()*360}deg)`; let o = document.createElement('div'); o.textContent =['☕️', '🫖', '🧁', '🃏', '🎩'][Math.floor(Math.random()*5)]; o.style.cssText = `position:absolute; left:${Math.random()*90}%; top:${Math.random()*90}%; font-size:3rem; pointer-events:none;`; a.appendChild(o); }; a.append(l, bc); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '我に返る'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupChoicePhase() { const a = document.createElement('div'); a.className = 'choice-area';['♥️','♠️'].forEach(c=>{ const i = document.createElement('div'); i.textContent = c; i.style.fontSize = '5rem'; i.style.cursor = 'pointer'; i.addEventListener('mouseenter', () => tracker.hoverStart = Date.now()); i.addEventListener('mouseleave', () => tracker.hoverTime += (Date.now() - tracker.hoverStart)); i.onclick = () => { tracker.choice = c; tracker.choiceTime = Date.now() - tracker.startTime; updateLog(`選択完了: ${c}`); nextPhase(); }; a.appendChild(i); }); mainArea.appendChild(a); }
+
+function setupDragPhase() { const a = document.createElement('div'); a.className = 'play-area'; for(let i=0; i<3; i++) { const c = document.createElement('div'); c.textContent = '☕️'; c.className = 'item'; c.style.left = (20+i*25)+'%'; c.style.top = '40%'; makeDraggable(c, a, () => { tracker.cupDrags++; updateLog(`移動[${tracker.cupDrags}回]`); }); a.appendChild(c); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '配置完了'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupClickerPhase() { const a = document.createElement('div'); a.className = 'play-area'; const r = document.createElement('div'); r.textContent = '🐇'; r.className = 'item'; const m = () => { r.style.left = Math.random()*80+'%'; r.style.top = Math.random()*80+'%'; }; m(); activeIntervals.push(setInterval(m, 700)); r.onmousedown = () => { tracker.rabbitClicks++; updateLog(`ウサギ捕獲[${tracker.rabbitClicks}回]`); m(); }; a.appendChild(r); mainArea.appendChild(a); activeIntervals.push(setTimeout(nextPhase, 5000)); }
+
+function setupScalePhase() { const a = document.createElement('div'); a.style.marginTop = '20px'; const s = document.createElement('div'); s.textContent = '🍄'; s.style.fontSize = '5rem'; let sz = 5; const b1 = document.createElement('span'); b1.className = 'fa-solid fa-wine-bottle scale-btn'; b1.onclick = () => { sz--; s.style.fontSize = sz+'rem'; tracker.scaleShrink++; }; const b2 = document.createElement('span'); b2.className = 'fa-solid fa-cookie-bite scale-btn'; b2.onclick = () => { sz++; s.style.fontSize = sz+'rem'; tracker.scaleGrow++; }; const b = document.createElement('button'); b.className = 'btn'; b.textContent = '決定'; b.onclick = nextPhase; a.append(b1, s, b2); mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupSortPhase() { const a = document.createElement('div'); a.className = 'play-area'; const cards = [];['♠️', '♥️', '♦️', '♣️'].forEach(s => { const c = document.createElement('div'); c.textContent = s; c.className = 'item'; c.style.left = Math.random()*80+'%'; c.style.top = Math.random()*80+'%'; makeDraggable(c, a, () => tracker.sortDrags++); a.appendChild(c); cards.push(c); }); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '整列完了'; b.onclick = () => { const tops = cards.map(c => parseInt(c.style.top || 0)); if (Math.max(...tops) - Math.min(...tops) < 30) tracker.isAligned = true; nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupDarlingPhase() { const a = document.createElement('div'); a.className = 'play-area'; const l = document.createElement('div'); l.className = 'item'; l.style.cssText = "background:white; padding:15px; border:2px solid #ff66a3; border-radius:10px; width:70%; font-size:0.8rem; color:#333; z-index:2; left:10%; top:10%;"; l.innerHTML = `「ねえダーリン♡ あなたのその『完璧なシステム』、もし現実のノイズが一つでも混じったら、あっという間に崩れ去る『ただの砂上の楼閣』になっちゃうわよ……？🥺」<br><br><span style="font-size:0.6rem; color:gray;">- ILIより</span>`; const t = document.createElement('div'); t.textContent = '🗑️'; t.style.cssText = "font-size:3rem; position:absolute; bottom:10px; right:10px; z-index:1;"; const d = document.createElement('div'); d.textContent = '🗃️'; d.style.cssText = "font-size:3rem; position:absolute; bottom:10px; left:10px; z-index:1;"; makeDraggable(l, a, () => updateLog("手紙を触った"), () => { if(checkCollision(l, t)){ l.style.display='none'; tracker.letterAction="trashed"; }else if(checkCollision(l, d)){ l.style.display='none'; tracker.letterAction="drawer"; }}); a.append(d, t, l); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '次へ'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupChessPhase() { const a = document.createElement('div'); a.className = 'play-area'; const k = document.createElement('div'); k.textContent = '♚'; k.style.cssText = "position:absolute; left:45%; top:40%; font-size:4rem; color:#2c3e50;"; const p = document.createElement('div'); p.textContent = '♙'; p.className = 'item'; p.style.left = '10%'; p.style.top = '10%'; p.style.color = "#d32f2f"; makeDraggable(p, a, () => updateLog('見極め中...')); a.append(k, p); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '配置完了'; b.onclick = () => { const kr = k.getBoundingClientRect(), pr = p.getBoundingClientRect(); tracker.seChessDist = Math.floor(Math.abs(kr.left - pr.left) + Math.abs(kr.top - pr.top)); nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupFixClockPhase() { const a = document.createElement('div'); a.className = 'play-area'; const clock = document.createElement('div'); clock.textContent = '🕰️'; clock.style.cssText = "position:absolute; left:40%; top:30%; font-size:5rem; opacity:0.5;"; a.appendChild(clock); const sT = Date.now(); let fc = 0; for(let i=0; i<3; i++) { const g = document.createElement('div'); g.textContent = '⚙️'; g.className = 'item'; g.style.left = (Math.random()*60+10)+'%'; g.style.top = (Math.random()*60+10)+'%'; makeDraggable(g, a, () => {}, () => { if(checkCollision(g, clock)){ g.style.pointerEvents = 'none'; fc++; if(fc === 3) { tracker.fixClockTime = Date.now() - sT; activeIntervals.push(setTimeout(nextPhase, 600)); } } }); a.appendChild(g); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '完了'; b.onclick = () => { if(tracker.fixClockTime === 0) tracker.fixClockTime = Date.now() - sT; nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupTeObstaclePhase() { const a = document.createElement('div'); a.className = 'play-area'; const t = document.createElement('div'); t.textContent = '🗑️'; t.style.cssText = "position:absolute; right:5%; bottom:5%; font-size:4rem; z-index:1;"; a.appendChild(t); const sT = Date.now(); let rc = 0; for(let i=0; i<3; i++) { const r = document.createElement('div'); r.textContent = '🪨'; r.className = 'item'; r.style.left = (20+Math.random()*50)+'%'; r.style.top = (20+Math.random()*50)+'%'; r.style.zIndex = '2'; makeDraggable(r, a, () => {}, () => { if(checkCollision(r, t)) { r.style.display = 'none'; rc++; if(rc === 3) { tracker.obstacleTime = Date.now() - sT; activeIntervals.push(setTimeout(nextPhase, 600)); } } }); a.appendChild(r); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '諦める'; b.onclick = () => { if(tracker.obstacleTime === 0) tracker.obstacleTime = Date.now() - sT; nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupSeAttackPhase() { const a = document.createElement('div'); a.className = 'play-area'; a.style.overflow = 'hidden'; const s = document.createElement('div'); s.textContent = '🃏'; s.style.cssText = "position:absolute; right:10%; top:30%; font-size:5rem; transition:0.1s;"; a.appendChild(s); let p = 10; const iv = setInterval(() => { p += 2; s.style.right = p + '%'; if(p > 80) { clearInterval(iv); nextPhase(); } }, 100); activeIntervals.push(iv); const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = '⚔️ 押し返す！'; b.style.cssText = "position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:10; padding:15px 30px;"; b.onclick = () => { p -= 6; tracker.attackClicks++; s.style.right = p + '%'; if(p < 0) { clearInterval(iv); activeIntervals.push(setTimeout(nextPhase, 500)); } }; a.appendChild(b); mainArea.appendChild(a); }
+
+function setupSiCushionPhase() { const a = document.createElement('div'); a.className = 'play-area'; const m = document.createElement('div'); m.textContent = '🍄'; m.style.cssText = "position:absolute; left:40%; top:50%; font-size:5rem;"; const c = document.createElement('div'); c.textContent = '🍪'; c.className = 'item'; makeDraggable(c, a, () => tracker.siMicroMovements++); a.append(m, c); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '完了'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupRosesPhase() { const a = document.createElement('div'); a.style.marginTop = '20px'; for(let i=0; i<5; i++){ const r = document.createElement('div'); r.textContent = '🌹'; r.className = 'rose'; r.onclick = () => { if(!r.classList.contains('painted')){ r.classList.add('painted'); tracker.rosesPainted++; }}; a.appendChild(r); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '塗り終わり'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+
+function setupHatsPhase() { const a = document.createElement('div'); a.className = 'choice-area';['🎩','👒','🧢'].forEach(h=>{ const i = document.createElement('div'); i.textContent = h; i.style.fontSize = '4rem'; i.style.cursor = 'pointer'; i.onclick = () => { tracker.choice = h; nextPhase(); }; a.appendChild(i); }); mainArea.appendChild(a); }
+
+function setupMirrorPhase() { const a = document.createElement('div'); a.style.padding = "20px"; const icons = ['🐱', '🐱', '🦉', '🦊'].sort(() => Math.random()-0.5); icons.forEach(i => { const el = document.createElement('span'); el.textContent = i; el.style.fontSize = '3rem'; el.style.margin = '10px'; el.style.cursor = 'pointer'; el.onclick = () => { if(i === '🐱') tracker.mirrorCorrect++; nextPhase(); }; a.appendChild(el); }); mainArea.appendChild(a); }
+
+function setupDrawPhase() { const canvas = document.createElement('canvas'); canvas.id = 'canvas-area'; canvas.width = 400; canvas.height = 200; const ctx = canvas.getContext('2d'); let isDrawing = false, lx = 0, ly = 0; canvas.onmousedown = (e) => { isDrawing = true; [lx, ly] = [e.offsetX, e.offsetY]; }; canvas.onmouseup = () => isDrawing = false; canvas.onmousemove = (e) => { if (!isDrawing) return; tracker.drawDistance += Math.sqrt(Math.pow(e.offsetX-lx, 2) + Math.pow(e.offsetY-ly, 2)); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(e.offsetX, e.offsetY); ctx.strokeStyle = '#d32f2f'; ctx.lineWidth = 3; ctx.stroke(); [lx, ly] = [e.offsetX, e.offsetY]; }; mainArea.appendChild(canvas); activeIntervals.push(setTimeout(nextPhase, 5000)); }
+
+
+/* ================== 結果発表＆シェア＆画像保存 ================== */
+function showResult() {
+    clearAllIntervals(); instruction.textContent = ""; document.querySelector('h1').innerHTML = '🎩 観測終了 ☕️'; backBtn.style.display = 'none';
+    if(progressCounter) progressCounter.style.display = 'none';
+
+    const res = appData.calculateType(tracker); const typeData = appData.socionicsTypes[res.key];
+    const scoreStr = `Ti:${res.scores.Ti} / Ni:${res.scores.Ni} / Ne:${res.scores.Ne} / Se:${res.scores.Se} / Te:${res.scores.Te} / Si:${res.scores.Si} / Fe:${res.scores.Fe} / Fi:${res.scores.Fi}`;
+    const logStr = `・迷い時間: ${(tracker.choiceTime + tracker.hoverTime)/1000}秒\n・タスク処理: ${tracker.taskTime}ms\n・お茶温度誤差: ${tracker.teaError.toFixed(1)}%\n・逃走タイム: ${tracker.escapeTime}ms\n・整列Tiフラグ: ${tracker.isAligned}\n・手紙の扱い: ${tracker.letterAction}\n・境界線: ${tracker.boundaryAction} (${Math.round(tracker.boundaryX)}px)\n・額縁のズレ: ${Math.round(tracker.frameError)}度\n・望遠鏡ピント: ${tracker.niFocus}\n・チェス制圧: ${tracker.seChessDist}px\n・時計修理: ${tracker.fixClockTime}ms\n・岩の排除: ${tracker.obstacleTime}ms\n・BGM熱量: ${tracker.bgmVolume}%`;
+
+    mainArea.innerHTML = `
+        <div id="result-capture-area" style="background:var(--card-bg); padding:15px; border-radius:10px; border:3px solid var(--text-dark);">
+            <h2 style="color:var(--accent-red); font-size:1.8rem; margin:10px 0;">${typeData.name}</h2>
+            <h3 style="margin:5px 0; color:#333;">社会使命: ${typeData.mission}</h3>
+            <p style="font-weight:bold; color:#666; font-size:0.9rem;">自認: ${tracker.userIdentity || '未入力'}</p>
+            <div style="background:rgba(255,255,255,0.8); padding:15px; border-radius:12px; margin:15px 0; border:2px solid var(--text-dark); text-align:left; line-height:1.6; font-size:0.95rem; white-space:pre-wrap;">${typeData.desc}</div>
+            <div style="text-align:left; background:#eee; padding:12px; border-radius:10px; font-size:0.85rem;">
+                <b style="color:var(--accent-red)">【機能スコア (Top: ${res.topPair})】</b><br>${scoreStr}
+            </div>
+            <div style="font-size:0.65rem; color:#666; margin-top:10px; text-align:left; display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+                ${logStr.replace(/\n/g, '<br>')}
+            </div>
+        </div>
+        
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:20px; flex-wrap:wrap;">
+            <button class="btn" style="font-size:1rem; padding:10px;" onclick="shareResult()"><i class="fa-solid fa-share-nodes"></i> シェア</button>
+            <button class="btn" style="font-size:1rem; padding:10px;" onclick="saveImage()"><i class="fa-solid fa-camera"></i> 画像保存</button>
+            <button class="btn" style="font-size:1rem; padding:10px;" onclick="window.location.reload()"><i class="fa-solid fa-rotate-left"></i> もう一度</button>
+        </div>
+        <p id="save-msg" style="font-size:0.8rem; color:#d32f2f; display:none; margin-top:10px;">↓下に画像が生成されたよ！スマホは長押しで保存してね！↓</p>
+    `;
+
+    // GAS送信
+    const gasUrl = "<https://script.google.com/macros/s/AKfycbxfqQtDZ4ZqGAUSOp4DFqaN-iNwsl6DUDrETcgzrsiA7MSiT0Anxf9C3udCmYlNr40/exec>"; 
+    const payload = { userIdentity: tracker.userIdentity || '未入力', resultType: typeData.name, scores: scoreStr, logs: logStr };
+    fetch(gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) }).catch(e => console.log(e));
+}
+
+function shareResult() {
+    const res = appData.calculateType(tracker);
+    const text = `私のモデルG行動観測結果は【${appData.socionicsTypes[res.key].name}】でした！\n社会使命: ${appData.socionicsTypes[res.key].mission}\n#モデルG行動観測診断 #ソシオニクス\n`;
+    const url = 'https://mofu-mitsu.github.io/Wonderland-G-Tracker';
+    if (navigator.share) { navigator.share({ title: 'モデルG行動観測診断', text: text, url: url }).catch(console.error); }
+    else { navigator.clipboard.writeText(text + url).then(() => alert("結果をクリップボードにコピーしました！")); }
+}
+
+function saveImage() {
+    const target = document.getElementById('result-capture-area');
+    html2canvas(target, { backgroundColor: '#fffdf5' }).then(canvas => {
+        const imgData = canvas.toDataURL("image/png");
+        const img = document.createElement('img');
+        img.src = imgData; img.style.width = '100%'; img.style.marginTop = '15px'; img.style.borderRadius = '10px'; img.style.border = '2px solid #ccc';
+        document.getElementById('save-msg').style.display = 'block';
+        mainArea.appendChild(img);
+        if(!/Mobi|Android/i.test(navigator.userAgent)) {
+            const link = document.createElement('a'); link.href = imgData; link.download = 'model-g-result.png'; link.click();
+        }
+    });
+}
+
+/* ================== 🐛 芋虫 ================== */
+const bug = document.getElementById('caterpillar'); const speech = document.getElementById('caterpillar-speech');
+let bugPos = -100; let bugMoving = false;
 setInterval(() => {
     if (Math.random() < 0.5 && !bugMoving && tracker.bugClicks < 30) {
         bugMoving = true; bugPos = -100;
         let walkInterval = setInterval(() => {
-            bugPos += 8;
-            if(bug) bug.style.right = bugPos + 'px';
-            if(speech) speech.style.right = (bugPos - 10) + 'px';
-            if (bugPos > window.innerWidth + 100) {
-                bugMoving = false; clearInterval(walkInterval);
-            }
+            bugPos += 8; if(bug) bug.style.right = bugPos + 'px'; if(speech) speech.style.right = (bugPos - 10) + 'px';
+            if (bugPos > window.innerWidth + 100) { bugMoving = false; clearInterval(walkInterval); }
         }, 30);
     }
 }, 3000);
-
-const lsiQuotes = ["……秩序を乱すな。", "時間は正確に。", "非合理的だ。", "干渉するな。", "無駄が多い。"];
+const lsiQuotes =["……秩序を乱すな。", "時間は正確に。", "非合理的だ。", "干渉するな。", "無駄が多い。"];
 if(bug) {
     bug.addEventListener('mousedown', () => {
         if (tracker.bugClicks >= 30) return;
-        tracker.bugClicks++;
-        updateLog(`芋虫に干渉: ${tracker.bugClicks}回`);
-        if (tracker.bugClicks >= 30) {
-            bug.textContent = '💥';
-            if(speech) { speech.textContent = "SLEパパに圧殺されました"; speech.style.opacity = 1; }
-            return;
-        }
-        if(speech) {
-            speech.textContent = lsiQuotes[tracker.bugClicks % lsiQuotes.length];
-            speech.style.opacity = 1; setTimeout(() => { speech.style.opacity = 0; }, 2000);
-        }
+        tracker.bugClicks++; updateLog(`芋虫干渉[${tracker.bugClicks}回]`);
+        if (tracker.bugClicks >= 30) { bug.textContent = '💥'; if(speech) { speech.textContent = "SLEパパに圧殺されました"; speech.style.opacity = 1; } return; }
+        if(speech) { speech.textContent = lsiQuotes[tracker.bugClicks % lsiQuotes.length]; speech.style.opacity = 1; setTimeout(() => { speech.style.opacity = 0; }, 2000); }
     });
-}
-
-/* ==================================
-   各フェーズ関数 (全部揃ってるよ！)
-================================== */
-
-function setupChoicePhase() {
-    const area = document.createElement('div'); area.className = 'choice-area';
-    ['♥️', '♠️'].forEach(c => {
-        const item = document.createElement('div');
-        item.textContent = c; item.style.fontSize = '5rem'; item.style.cursor = 'pointer';
-        item.onclick = () => { tracker.choice = c; tracker.choiceTime += Date.now() - tracker.startTime; nextPhase(); };
-        area.appendChild(item);
-    });
-    mainArea.appendChild(area);
-}
-
-function setupDragPhase() {
-    const area = document.createElement('div'); area.className = 'play-area';
-    for (let i = 0; i < 3; i++) {
-        const cup = document.createElement('div'); cup.textContent = '☕️';
-        cup.className = 'item'; cup.style.left = (20 + i*25) + '%'; cup.style.top = '40%';
-        makeDraggable(cup, area, () => { tracker.cupDrags++; updateLog(`カップ移動: ${tracker.cupDrags}`); });
-        area.appendChild(cup);
-    }
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '配置完了';
-    btn.onclick = nextPhase; mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupClickerPhase() {
-    const area = document.createElement('div'); area.className = 'play-area';
-    const rabbit = document.createElement('div'); rabbit.textContent = '🐇'; rabbit.className = 'item';
-    const move = () => { rabbit.style.left = Math.random()*80+'%'; rabbit.style.top = Math.random()*80+'%'; };
-    move();
-    let iv = setInterval(move, 700); activeIntervals.push(iv);
-    rabbit.onmousedown = () => { tracker.rabbitClicks++; updateLog(`ウサギ捕獲: ${tracker.rabbitClicks}`); move(); };
-    area.appendChild(rabbit); mainArea.appendChild(area);
-    activeIntervals.push(setTimeout(nextPhase, 5000));
-}
-
-function setupScalePhase() {
-    const area = document.createElement('div'); area.style.marginTop = '20px';
-    const shroom = document.createElement('div'); shroom.textContent = '🍄'; shroom.style.fontSize = '5rem';
-    let size = 5;
-    const b1 = document.createElement('span'); b1.className = 'fa-solid fa-wine-bottle scale-btn'; b1.style.color = '#2980b9';
-    b1.onclick = () => { size--; shroom.style.fontSize = size+'rem'; tracker.scaleShrink++; };
-    const b2 = document.createElement('span'); b2.className = 'fa-solid fa-cookie-bite scale-btn'; b2.style.color = '#c0392b';
-    b2.onclick = () => { size++; shroom.style.fontSize = size+'rem'; tracker.scaleGrow++; };
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '決定'; btn.onclick = nextPhase;
-    area.append(b1, shroom, b2); mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupSortPhase() {
-    const area = document.createElement('div'); area.className = 'play-area';
-    const suits =['♠️', '♥️', '♦️', '♣️']; const cards =[];
-    suits.forEach((s) => {
-        const c = document.createElement('div'); c.textContent = s; c.className = 'item';
-        c.style.left = Math.random()*80+'%'; c.style.top = Math.random()*80+'%';
-        makeDraggable(c, area, () => tracker.sortDrags++);
-        area.appendChild(c); cards.push(c);
-    });
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '整列完了';
-    btn.onclick = () => {
-        const tops = cards.map(c => parseInt(c.style.top || 0));
-        if (Math.max(...tops) - Math.min(...tops) < 30) tracker.isAligned = true;
-        nextPhase();
-    };
-    mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupBoundaryPhase() {
-    const area = document.createElement('div'); area.className = 'play-area';
-    area.style.background = 'linear-gradient(to right, #ffe6f2, #e6f2ff)';
-    const alice = document.createElement('div'); alice.textContent = '👱‍♀️'; alice.className = 'item'; alice.style.left = '10%';
-    const cat = document.createElement('div'); cat.textContent = '🐱'; cat.className = 'item'; cat.style.right = '10%';
-    const line = document.createElement('div'); line.className = 'boundary-line'; line.style.left = '50%';
-    area.onmousedown = (e) => {
-        const r = area.getBoundingClientRect(); tracker.boundaryX = e.clientX - r.left;
-        line.style.left = tracker.boundaryX + 'px';
-    };
-    area.append(alice, cat, line);
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'ここで引く'; btn.onclick = nextPhase;
-    mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupFixClockPhase() {
-    const area = document.createElement('div'); area.className = 'play-area';
-    const mainClock = document.createElement('div'); mainClock.textContent = '🕰️';
-    mainClock.style.cssText = "position:absolute; left:40%; top:30%; font-size:5rem; opacity:0.5;";
-    const startTe = Date.now();
-    for(let i=0; i<3; i++) {
-        const gear = document.createElement('div'); gear.textContent = '⚙️'; gear.className = 'item';
-        gear.style.left = (Math.random()*60+10)+'%'; gear.style.top = (Math.random()*60+10)+'%';
-        makeDraggable(gear, area); area.appendChild(gear);
-    }
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '修理完了！';
-    btn.onclick = () => { tracker.fixClockTime = Date.now() - startTe; nextPhase(); };
-    area.appendChild(mainClock); mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupSiCushionPhase() {
-    const area = document.createElement('div'); area.className = 'play-area';
-    const mush = document.createElement('div'); mush.textContent = '🍄'; mush.style.cssText = "position:absolute; left:40%; top:50%; font-size:5rem;";
-    const cushion = document.createElement('div'); cushion.textContent = '🍪'; cushion.className = 'item';
-    makeDraggable(cushion, area, () => tracker.siMicroMovements++);
-    area.append(mush, cushion);
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '調節完了'; btn.onclick = nextPhase;
-    mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupRosesPhase() {
-    const area = document.createElement('div'); area.style.marginTop = '20px';
-    for(let i=0; i<5; i++){
-        const r = document.createElement('div'); r.textContent = '🌹'; r.className = 'rose';
-        r.onclick = () => { if(!r.classList.contains('painted')){ r.classList.add('painted'); tracker.rosesPainted++; }};
-        area.appendChild(r);
-    }
-    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '塗り終わり'; btn.onclick = nextPhase;
-    mainArea.appendChild(area); mainArea.appendChild(btn);
-}
-
-function setupHatsPhase() {
-    const area = document.createElement('div'); area.className = 'choice-area';
-    ['🎩', '👒', '🧢'].forEach(h => {
-        const item = document.createElement('div'); item.textContent = h; item.style.fontSize = '4rem'; item.style.cursor = 'pointer';
-        item.onclick = () => { tracker.choice = h; nextPhase(); };
-        area.appendChild(item);
-    });
-    mainArea.appendChild(area);
-}
-
-function setupMirrorPhase() {
-    const area = document.createElement('div'); area.style.padding = "20px";
-    const icons = ['🐱', '🐱', '🦉', '🦊'].sort(() => Math.random()-0.5);
-    icons.forEach(icon => {
-        const item = document.createElement('span'); item.textContent = icon;
-        item.style.fontSize = '3rem'; item.style.margin = '10px'; item.style.cursor = 'pointer';
-        item.onclick = () => { if(icon === '🐱') tracker.mirrorCorrect++; nextPhase(); };
-        area.appendChild(item);
-    });
-    mainArea.appendChild(area);
-}
-
-function setupDrawPhase() {
-    const canvas = document.createElement('canvas'); canvas.id = 'canvas-area'; canvas.width = 400; canvas.height = 200;
-    const ctx = canvas.getContext('2d'); let isDrawing = false, lastX = 0, lastY = 0;
-    canvas.onmousedown = (e) => { isDrawing = true; [lastX, lastY] = [e.offsetX, e.offsetY]; };
-    canvas.onmouseup = () => isDrawing = false;
-    canvas.onmousemove = (e) => {
-        if (!isDrawing) return;
-        tracker.drawDistance += Math.sqrt(Math.pow(e.offsetX-lastX,2) + Math.pow(e.offsetY-lastY,2));
-        ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(e.offsetX, e.offsetY);
-        ctx.strokeStyle = '#d32f2f'; ctx.lineWidth = 3; ctx.stroke();
-        [lastX, lastY] = [e.offsetX, e.offsetY];
-    };
-    mainArea.appendChild(canvas);
-    activeIntervals.push(setTimeout(nextPhase, 5000));
-}
-
-function showResult() {
-    clearAllIntervals();
-    instruction.textContent = ""; document.querySelector('h1').innerHTML = '🎩 観測終了 ☕️';
-    const res = appData.calculateType(tracker);
-    const typeData = appData.socionicsTypes[res.key];
-    mainArea.innerHTML = `
-        <h2 style="color:var(--accent-red); font-size:1.8rem;">${typeData.name}</h2>
-        <h3 style="margin:5px 0; color:#333;">社会使命: ${typeData.mission}</h3>
-        <p style="font-weight:bold; color:#666;">自認: ${tracker.userIdentity || '未入力'}</p>
-        <div style="background:rgba(255,255,255,0.8); padding:15px; border-radius:12px; margin:15px 0; border:2px solid var(--text-dark); text-align:left; line-height:1.5;">${typeData.desc}</div>
-        <div style="text-align:left; background:#eee; padding:12px; border-radius:10px; font-size:0.85rem;">
-            <b style="color:var(--accent-red)">【機能スコア (Top: ${res.topPair})】</b><br>
-            Ti:${res.scores.Ti} / Ni:${res.scores.Ni} / Ne:${res.scores.Ne} / Se:${res.scores.Se} / Te:${res.scores.Te} / Si:${res.scores.Si} / Fe:${res.scores.Fe} / Fi:${res.scores.Fi}
-        </div>
-        <div style="font-size:0.7rem; color:#888; margin-top:10px; text-align:left; display:grid; grid-template-columns:1fr 1fr;">
-            <span>・カップ移動: ${tracker.cupDrags}</span>
-            <span>・ウサギ捕獲: ${tracker.rabbitClicks}</span>
-            <span>・整列Tiフラグ: ${tracker.isAligned}</span>
-            <span>・境界線位置: ${Math.round(tracker.boundaryX)}px</span>
-            <span>・時計修理タイム: ${tracker.fixClockTime}ms</span>
-            <span>・Si微調整: ${tracker.siMicroMovements}回</span>
-            <span>・バラ塗装: ${tracker.rosesPainted}本</span>
-            <span>・芋虫干渉: ${tracker.bugClicks}回</span>
-        </div>
-        <button class="btn" style="margin-top:15px; width:100%;" onclick="location.reload()">再挑戦</button>
-    `;
 }
