@@ -60,7 +60,7 @@ const appData = {
 
         // ★ Ni: 時間と予測 (みつき要望でさらに強化！)
         if (logs.niFocus >= 33) {
-            scores.Ni += Math.floor(logs.niFocus * 0.7); // 33なら+23、65なら+45、100なら+70
+            scores.Ni += Math.floor(logs.niFocus * 0.4); // 33なら+23、65なら+45、100なら+70
         }
         if (logs.hoverTime > 2000) scores.Ni += 15; // じっくりと予兆を待つエネルギー
         if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 15; // 物事を一点に収束させる動き
