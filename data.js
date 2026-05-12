@@ -79,14 +79,28 @@ const appData = {
         if (logs.escapeTime >= 5000) scores.Se += 15;
         if (logs.bugClicks >= 30) scores.Se += 100;
 
-        // Te: 効率
-// ★ Te: 効率と処理 (早いほど高得点に修正！) ★
-        // 3000ms以内で最大加点、遅いと0点になるシビアな仕様
-        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 50 - Math.floor(logs.fixClockTime/300)); 
-        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 40 - Math.floor(logs.obstacleTime/300));
-        if (logs.taskTime > 0) scores.Te += Math.max(0, 60 - Math.floor(logs.taskTime/100)); 
-        if (logs.attackTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.attackTime/150)); 
-        if (logs.letterAction === "ignored") scores.Te += 15;
+        // ① 時計修理：3秒(3000ms)以内でクリアなら最大20点。150ms遅れるごとに1点減る。
+        if (logs.fixClockTime > 0) {
+            scores.Te += Math.max(0, 20 - Math.floor(logs.fixClockTime / 150));
+        }
+
+        // ② 岩の排除：3秒(3000ms)以内でクリアなら最大20点。150ms遅れるごとに1点減る。
+        if (logs.obstacleTime > 0) {
+            scores.Te += Math.max(0, 20 - Math.floor(logs.obstacleTime / 150));
+        }
+
+        // ③ タスク処理(1-5)：2.5秒(2500ms)以内でクリアなら最大25点。100ms遅れるごとに1点減る。
+        if (logs.taskTime > 0) {
+            scores.Te += Math.max(0, 25 - Math.floor(logs.taskTime / 100));
+        }
+
+        // ④ 兵士撃退：2.2秒(2250ms)以内でクリアなら最大15点。150ms遅れるごとに1点減る。
+        if (logs.attackTime > 0) {
+            scores.Te += Math.max(0, 15 - Math.floor(logs.attackTime / 150));
+        }
+
+        // ⑤ 手紙スルー
+        if (logs.letterAction === "ignored") scores.Te += 10;
 
         // Si: 快適さと微調整
         scores.Si += Math.min(20, logs.siMicroMovements * 2); 
