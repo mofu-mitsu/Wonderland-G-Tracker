@@ -53,7 +53,7 @@ const appData = {
 
         // Ti: 論理処理
         if (logs.isAligned) scores.Ti += 15;
-        if (logs.isAlternating) scores.Ti += 15; // ★新：赤黒交互ボーナス
+        if (logs.isAlternating) scores.Ti += 20; // ★新：赤黒交互ボーナス
         if (logs.mirrorCorrect > 0) scores.Ti += 10;
         if (logs.letterAction === "drawer") scores.Ti += 10; 
         if (logs.frameError === 0) scores.Ti += 15; 
