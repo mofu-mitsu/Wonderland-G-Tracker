@@ -82,8 +82,8 @@ const appData = {
         // Te: 効率
 // ★ Te: 効率と処理 (早いほど高得点に修正！) ★
         // 3000ms以内で最大加点、遅いと0点になるシビアな仕様
-        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 50 - Math.floor(logs.fixClockTime/100)); 
-        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 40 - Math.floor(logs.obstacleTime/100));
+        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 50 - Math.floor(logs.fixClockTime/200)); 
+        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 40 - Math.floor(logs.obstacleTime/200));
         if (logs.taskTime > 0) scores.Te += Math.max(0, 60 - Math.floor(logs.taskTime/80)); 
         if (logs.attackTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.attackTime/150)); 
         if (logs.letterAction === "ignored") scores.Te += 15;
