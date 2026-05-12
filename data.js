@@ -68,13 +68,20 @@ const appData = {
         if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 15; // 物事を一点に収束させる動き
 
         // Ne: 可能性とカオス
-        scores.Ne += Math.min(30, logs.chaosClicks * 4); 
-        scores.Ne += logs.cupDrags * 2;
-        if (logs.seChessDist > 50) scores.Ne += 10;
-        if (logs.escapeTime >= 5000) scores.Ne += 15; 
+        // カオスボタンは15回分（最大30点）くらいで頭打ちにするよ
+        scores.Ne += Math.min(30, logs.chaosClicks * 2); 
+        
+        // 逃走劇：単なる生存時間じゃなく「逃げ回った距離」をNe/Seとして加算！
+        // 激しく逃げ回る（カオスな回避）＝Ne/Se
+        scores.Ne += Math.floor(logs.escapeDistance / 200); 
 
+        // カップ移動は「探索エネルギー」として少しだけ
+        scores.Ne += Math.floor(logs.cupDrags * 0.5);
+
+        if (logs.boundaryAction === 'removed') scores.Ne += 15; // 境界を外す柔軟性
+        scores.Ne += Math.min(30, logs.rabbitClicks * 3); // ウサギ捕獲
         // Se: 制圧と見極め
-        scores.Se += Math.min(30, logs.rabbitClicks * 4); 
+        scores.Se += Math.min(30, logs.rabbitClicks * 3); 
         // ★兵士撃退もスピードで判定(5秒以内なら加点)
         if (logs.attackTime > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
         if (logs.seChessDist < 30) scores.Se += 20;
