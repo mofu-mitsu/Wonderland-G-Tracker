@@ -1,10 +1,10 @@
 const appData = {
     phases:[
-        { id: 'p1', type: 'choice', title: '🃏 赤と黒', instruction: '惹かれるマークを選んでね。' },
-        { id: 'p2', type: 'drag', title: '☕️ お茶会の準備', instruction: '3つのカップを配置して。' },
+        { id: 'p1', type: 'choice', title: '🃏 赤と黒', instruction: '直感で、惹かれるスートを選んでね。' },
+        { id: 'p2', type: 'drag', title: '☕️ お茶会の準備', instruction: 'ティーカップを好きな場所に配置して！' },
         { id: 'p3', type: 'clicker', title: '🐇 白ウサギを追え', instruction: '逃げ回るウサギを捕まえて！(連打)' },
-        { id: 'p4', type: 'scale', title: '🍄 EAT ME / DRINK ME', instruction: 'キノコのサイズを調節して。' },
-        { id: 'p5', type: 'sort', title: '♠️ トランプの整列', instruction: 'カードを動かして。' },
+        { id: 'p4', type: 'scale', title: '🍄 EAT ME / DRINK ME', instruction: 'クッキー(拡大)か小瓶(縮小)で、キノコのサイズを変えて。' },
+        { id: 'p5', type: 'sort', title: '♠️ トランプの整列', instruction: '4枚のトランプを動かしてみて。(散らかしても整列させてもOK)' },
         { id: 'p6', type: 'darling', title: '💌 ダーリンからの手紙', instruction: '手紙が届いたよ。どうする？' },
         { id: 'p7', type: 'telescope', title: '🔭 時間のピント', instruction: '望遠鏡のピントを合わせて覗いてみて。' },
         { id: 'p8', type: 'chess', title: '♟️ 盤上の制圧', instruction: '相手のキング(♚)に対して、駒(♙)をどう配置する？' },
@@ -17,12 +17,12 @@ const appData = {
         { id: 'p15', type: 'si_tea', title: '🍵 お茶の温度', instruction: 'バーが動くよ！「適温(緑)」の瞬間にストップ！' },
         { id: 'p16', type: 'si_frame', title: '🖼️ 歪んだ額縁', instruction: 'ドラッグして、額縁の傾きを完全に真っ直ぐ(0度)に直して！' },
         { id: 'p17', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: '座布団を一番しっくりくる位置に微調整して。' },
-        { id: 'p18', type: 'roses', title: '🌹 バラを赤く塗ろう', instruction: '白いバラをタップして赤く塗ってね。' },
+        { id: 'p18', type: 'roses', title: '🌹 バラを赤く塗ろう', instruction: '白いバラをクリックして、好きな数だけ赤く塗ってね。' },
         { id: 'p19', type: 'boundary', title: '📏 心の境界線', instruction: 'チェシャ猫(🐱)との心の距離を決めて。(右端に追いやってもOK)' },
         { id: 'p20', type: 'bgm', title: '🎶 お茶会の演出', instruction: 'ドラッグでBGMテンションを上げて空間を熱狂させて！' },
         { id: 'p21', type: 'chaos', title: '🌀 狂気のお茶会', instruction: 'DRINK MEボタンを押してみて…' },
         { id: 'p22', type: 'mirror', title: '🪞 鏡の国', instruction: '左右対称なペアをクリック！' },
-        { id: 'p23', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '自由に撫でて軌跡を残して。' }
+        { id: 'p23', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '白いキャンバスを自由に撫でて、軌跡を残して！(5秒間)' }
     ],
 
     socionicsTypes: {
@@ -53,14 +53,17 @@ const appData = {
 
         // Ti: 論理処理
         if (logs.isAligned) scores.Ti += 15;
+        if (logs.isAlternating) scores.Ti += 15; // ★新：赤黒交互ボーナス
         if (logs.mirrorCorrect > 0) scores.Ti += 10;
-        if (logs.letterAction === "drawer") scores.Ti += 20; 
+        if (logs.letterAction === "drawer") scores.Ti += 10; 
         if (logs.frameError === 0) scores.Ti += 15; 
 
-        // Ni: 時間と予測
-        if (logs.niFocus >= 33 && logs.niFocus < 66) scores.Ni += 20; 
-        if (logs.niFocus >= 66) scores.Ni += 30; 
-        if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 10;
+        // ★ Ni: 時間と予測 (みつき要望でさらに強化！)
+        if (logs.niFocus >= 33) {
+            scores.Ni += Math.floor(logs.niFocus * 0.7); // 33なら+23、65なら+45、100なら+70
+        }
+        if (logs.hoverTime > 2000) scores.Ni += 15; // じっくりと予兆を待つエネルギー
+        if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 15; // 物事を一点に収束させる動き
 
         // Ne: 可能性とカオス
         scores.Ne += Math.min(30, logs.chaosClicks * 4); 
@@ -70,24 +73,27 @@ const appData = {
 
         // Se: 制圧と見極め
         scores.Se += Math.min(30, logs.rabbitClicks * 4); 
-        scores.Se += Math.min(30, logs.attackClicks * 3);
+        // ★兵士撃退もスピードで判定(5秒以内なら加点)
+        if (logs.attackTime > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
         if (logs.seChessDist < 30) scores.Se += 20;
         if (logs.escapeTime >= 5000) scores.Se += 15;
         if (logs.bugClicks >= 30) scores.Se += 100;
 
         // Te: 効率
-        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime/300)); 
-        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime/300));
-        if (logs.taskTime > 0 && logs.taskTime < 3000) scores.Te += 25; 
-        else if (logs.taskTime > 0) scores.Te += 10;
+// ★ Te: 効率と処理 (早いほど高得点に修正！) ★
+        // 3000ms以内で最大加点、遅いと0点になるシビアな仕様
+        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 50 - Math.floor(logs.fixClockTime/100)); 
+        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 40 - Math.floor(logs.obstacleTime/100));
+        if (logs.taskTime > 0) scores.Te += Math.max(0, 60 - Math.floor(logs.taskTime/80)); 
+        if (logs.attackTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.attackTime/150)); 
         if (logs.letterAction === "ignored") scores.Te += 15;
 
         // Si: 快適さと微調整
-        scores.Si += Math.min(20, logs.siMicroMovements * 3); 
-        if (logs.teaError <= 3) scores.Si += 25; 
-        else if (logs.teaError <= 10) scores.Si += 10;
-        if (Math.abs(logs.frameError) <= 2) scores.Si += 15; 
-        if (logs.niFocus < 33) scores.Si += 15; 
+        scores.Si += Math.min(20, logs.siMicroMovements * 2); 
+        if (logs.teaError <= 3) scores.Si += 20; 
+        if (Math.abs(logs.frameError) <= 2) scores.Si += 10; 
+        if (logs.niFocus < 33) scores.Si += 15; // 今現在
+        if (logs.scaleGrow === 0 && logs.scaleShrink === 0) scores.Si += 10; // ★新：キノコのサイズを変えない（現状維持・Si）
 
         // Fi: 個人的価値と防衛
         if (logs.rosesPainted === 1) scores.Fi += 20; 
