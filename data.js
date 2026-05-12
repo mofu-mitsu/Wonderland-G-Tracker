@@ -41,100 +41,77 @@ const appData = {
         LSE: { name: "LSE (ESTj)", mission: "TeSe: ビジネス力", desc: "【現場のトラブルを即座に鎮圧する頼れる現場監督】\n自分の領域内で起きた問題に対し、即座に介入して解決する圧倒的な実務能力の持ち主。働き者で、物事がスムーズに機能することを至上の喜びとします。" },
         IEE: { name: "IEE (ENFp)", mission: "NeFe: 興味深いコミュニケーション", desc: "【人々の才能の種を見つけて花開かせるインスパイアラー】\n面白い人々や未知の可能性に惹かれ、コミュニケーションを通して他者のやる気を刺激します。一つの場所に縛られず、常に新しい繋がりを探し求めます。" },
         EII: { name: "EII (INFj)", mission: "FiNi: 時間の倫理", desc: "【深い共感と忍耐で、世界を密かに癒やし続ける調停者】\n他者の痛みに寄り添い、少しずつ時間をかけて世界に良い変化をもたらします。争いを好まず、静かに自分の内なる道徳律に従って生きる癒やし手です。" },
-        SLI: { name: "SLI (ISTp)", mission: "SiTi: 快適な要求", desc: "【無駄を削ぎ落とし、完璧な心地よさを追求する職人】\n自分が快適に過ごせる環境を整え、ツールやメカニズムを完璧に管理します。大げさな感情表現は苦手ですが、自分の手で触れられる現実の質を極限まで高めます。" }
+        SLI: { name: "SLI (ISTp)", mission: "SiTi: 快適な要求", desc: "【無駄を削ぎ落とし、完璧な心地よさを追求する職人】\n自分が快適に過ごせる環境を整え、ツールとメカニズムを完璧に管理します。大げさな感情表現は苦手ですが、自分の手で触れられる現実の質を極限まで高めます。" }
     },
 
     calculateType: function(logs) {
         let scores = { Ti:0, Ne:0, Se:0, Ni:0, Te:0, Si:0, Fe:0, Fi:0 };
 
         // ★ 迷った時間の判定強化 ★
-        if (logs.choiceTime > 2000) scores.Ti += 10; // 論理的な理由を考えた
-        if (logs.hoverTime > 3000) { scores.Fi += 10; scores.Ni += 10; } // 内なる価値観・予測の迷い
+        if (logs.choiceTime > 2000) scores.Ti += 10; 
+        if (logs.hoverTime > 3000) { scores.Fi += 10; scores.Ni += 10; } 
 
-        // Ti: 論理処理
+        // ★ Ti: 論理処理 ★
         if (logs.isAligned) {
             scores.Ti += 15; // まず整列で+15
             if (logs.isAlternating) {
-                scores.Ti += 25; // 整列した上で交互なら、さらに+35（合計50！）
+                scores.Ti += 25; // 整列した上で交互なら、さらに+25
+            }
+        } // ← 【修正箇所】ここで確実にカッコを閉じる！
+
         if (logs.mirrorCorrect > 0) scores.Ti += 10;
         if (logs.letterAction === "drawer") scores.Ti += 10; 
         if (logs.frameError === 0) scores.Ti += 15; 
 
-        // ★ Ni: 時間と予測 (みつき要望でさらに強化！)
+        // ★ Ni: 時間と予測 ★
         if (logs.niFocus >= 33) {
-            scores.Ni += Math.floor(logs.niFocus * 0.4); // 33なら+23、65なら+45、100なら+70
+            scores.Ni += Math.floor(logs.niFocus * 0.4); 
         }
-        if (logs.hoverTime > 2000) scores.Ni += 15; // じっくりと予兆を待つエネルギー
-        if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 15; // 物事を一点に収束させる動き
+        if (logs.hoverTime > 2000) scores.Ni += 15; 
+        if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 15; 
 
-        // Ne: 可能性とカオス
-        // カオスボタンは15回分（最大30点）くらいで頭打ちにするよ
+        // ★ Ne: 可能性とカオス ★
         scores.Ne += Math.min(30, logs.chaosClicks * 2); 
-        
-        // 逃走劇：単なる生存時間じゃなく「逃げ回った距離」をNe/Seとして加算！
-        // 激しく逃げ回る（カオスな回避）＝Ne/Se
         scores.Ne += Math.floor(logs.escapeDistance / 200); 
-
-        // カップ移動は「探索エネルギー」として少しだけ
         scores.Ne += Math.floor(logs.cupDrags * 0.5);
+        if (logs.boundaryAction === 'removed') scores.Ne += 15; 
+        scores.Ne += Math.min(30, logs.rabbitClicks * 3); // みつき要望：Neはウサギも追う
 
-        if (logs.boundaryAction === 'removed') scores.Ne += 15; // 境界を外す柔軟性
-        scores.Ne += Math.min(30, logs.rabbitClicks * 3); // ウサギ捕獲
-        // Se: 制圧と見極め
+        // ★ Se: 制圧と見極め ★
         scores.Se += Math.min(30, logs.rabbitClicks * 3); 
-        // ★兵士撃退もスピードで判定(5秒以内なら加点)
         if (logs.attackTime > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
         if (logs.seChessDist < 30) scores.Se += 20;
         if (logs.escapeTime >= 5000) scores.Se += 15;
         if (logs.bugClicks >= 30) scores.Se += 100;
 
-        // ★ Te: 効率 (時間による無段階・減衰加点方式：修正版) ★
-        
-        // ① 時計修理：最大30点。200ms遅れるごとに1点減る。(6秒で0点)
-        // 2秒(2000ms)でクリアなら 30 - 10 = 20点！
-        if (logs.fixClockTime > 0) {
-            scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime / 200));
-        }
-
-        // ② 岩の排除：最大30点。200ms遅れるごとに1点減る。(6秒で0点)
-        if (logs.obstacleTime > 0) {
-            scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime / 200));
-        }
-
-        // ③ タスク処理(1-5)：最大35点。150ms遅れるごとに1点減る。(約5秒で0点)
-        // 1.5秒でクリアなら 35 - 10 = 25点！
-        if (logs.taskTime > 0) {
-            scores.Te += Math.max(0, 35 - Math.floor(logs.taskTime / 150));
-        }
-
-        // ④ 兵士撃退：最大20点。200ms遅れるごとに1点減る。(4秒で0点)
-        if (logs.attackTime > 0) {
-            scores.Te += Math.max(0, 20 - Math.floor(logs.attackTime / 200));
-        }
-
-        // ⑤ 手紙スルー (これは固定のTe的判断)
+        // ★ Te: 効率と処理 (早いほど高得点) ★
+        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime / 200));
+        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime / 200));
+        if (logs.taskTime > 0) scores.Te += Math.max(0, 35 - Math.floor(logs.taskTime / 150));
+        if (logs.attackTime > 0) scores.Te += Math.max(0, 20 - Math.floor(logs.attackTime / 200));
         if (logs.letterAction === "ignored") scores.Te += 15;
 
-        // Si: 快適さと微調整
+        // ★ Si: 快適さと微調整 ★
         scores.Si += Math.min(20, logs.siMicroMovements * 2); 
         if (logs.teaError <= 3) scores.Si += 20; 
         if (Math.abs(logs.frameError) <= 2) scores.Si += 10; 
-        if (logs.niFocus < 33) scores.Si += 15; // 今現在
-        if (logs.scaleGrow === 0 && logs.scaleShrink === 0) scores.Si += 10; // ★新：キノコのサイズを変えない（現状維持・Si）
+        if (logs.niFocus < 33) scores.Si += 15; 
+        if (logs.scaleGrow === 0 && logs.scaleShrink === 0) scores.Si += 10; 
 
-        // Fi: 個人的価値と防衛
+        // ★ Fi: 個人的価値と防衛 ★
         if (logs.rosesPainted === 1) scores.Fi += 20; 
         if (logs.letterAction === "trashed") scores.Fi += 25; 
         if (logs.choice === '👒') scores.Fi += 15;
         if (logs.boundaryAction === 'drawn' && logs.boundaryX < 150) scores.Fi += 20; 
 
-        // Fe: 感情の彩りと融合
+        // ★ Fe: 感情の彩りと融合 ★
         scores.Fe += Math.floor(logs.bgmVolume * 0.4); 
         if (logs.rosesPainted > 2) scores.Fe += (logs.rosesPainted * 5);
         if (logs.boundaryAction === 'melted') scores.Fe += 25; 
         if (logs.boundaryAction === 'removed') { scores.Fe += 15; scores.Ne += 10; } 
-        if (logs.letterAction === "touched") scores.Fe += 15; // ★追加：なでなでした
+        if (logs.letterAction === "touched") scores.Fe += 15; 
 
+        // ★ プロファイルマッチング ★
         const missionMap = {
             "ILE":["Ne", "Te"], "ESE": ["Fe", "Se"], "SEI":["Si", "Fi"], "LII":["Ti", "Ni"],
             "EIE":["Fe", "Ne"], "SLE":["Se", "Te"], "LSI":["Ti", "Si"], "IEI":["Ni", "Fi"],
@@ -142,11 +119,8 @@ const appData = {
             "LSE":["Te", "Se"], "IEE": ["Ne", "Fe"], "EII":["Fi", "Ni"], "SLI": ["Si", "Ti"]
         };
 
-        // ★ ランキング用の配列を作成 ★
         let rankings = [];
-
         for (const [type, funcs] of Object.entries(missionMap)) {
-            // 第1機能を1.5倍にして重み付けし、スコアを計算
             const currentScore = Math.round((scores[funcs[0]] * 1.5) + scores[funcs[1]]);
             rankings.push({
                 type: type,
@@ -154,25 +128,18 @@ const appData = {
                 matchScore: currentScore
             });
         }
-
-        // スコアが高い順に並び替え（降順ソート）
         rankings.sort((a, b) => b.matchScore - a.matchScore);
 
-        // SLEパパ（芋虫圧殺）特別ルート
+        // ★ SLEパパ特別ルート ★
         if (logs.bugClicks >= 30) { 
-            // 強制的にSLEを1位に引き上げる
             const sleIndex = rankings.findIndex(r => r.type === "SLE");
             if (sleIndex > -1) {
                 const sleObj = rankings.splice(sleIndex, 1)[0];
-                sleObj.matchScore = 999; // 圧倒的暴力スコア
+                sleObj.matchScore = 999; 
                 rankings.unshift(sleObj);
             }
-        }
+        } // ← 【修正箇所】ここで確実にカッコを閉じる！
 
-        const bestType = rankings[0].type;
-        const bestPair = rankings[0].pair;
-
-        // ランキングのデータごと返す！
-        return { key: bestType, scores: scores, topPair: bestPair, rankings: rankings };
-    } // calculateType 終了
+        return { key: rankings[0].type, scores: scores, topPair: rankings[0].pair, rankings: rankings };
+    }
 };
