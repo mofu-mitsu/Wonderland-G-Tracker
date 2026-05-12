@@ -344,7 +344,26 @@ h1 { color: var(--accent-red); font-family: 'Playfair Display', serif; font-size
 
 #caterpillar { position: fixed; font-size: 3rem; bottom: 30px; right: -80px; cursor: pointer; z-index: 999; }
 #caterpillar-speech { position: fixed; bottom: 80px; background: white; padding: 8px 15px; border-radius: 10px; border: 2px solid #333; opacity: 0; z-index: 1000; font-size: 0.9rem; font-weight: bold; }
+/* 追加するスタイル */
+.nav-ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-dark);
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+}
 
+#progress-counter {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: var(--accent-red);
+    font-weight: bold;
+}
 /* スマホ用のレスポンシブ対応 */
 @media screen and (max-width: 480px) {
     #app-container { padding: 15px; border-width: 2px; }
