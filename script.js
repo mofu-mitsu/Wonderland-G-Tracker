@@ -197,11 +197,81 @@ function setupClickerPhase() { const a = document.createElement('div'); a.classN
 
 function setupScalePhase() { const a = document.createElement('div'); a.style.marginTop = '20px'; const s = document.createElement('div'); s.textContent = '🍄'; s.style.fontSize = '5rem'; let sz = 5; const b1 = document.createElement('span'); b1.className = 'fa-solid fa-wine-bottle scale-btn'; b1.onclick = () => { sz--; s.style.fontSize = sz+'rem'; tracker.scaleShrink++; }; const b2 = document.createElement('span'); b2.className = 'fa-solid fa-cookie-bite scale-btn'; b2.onclick = () => { sz++; s.style.fontSize = sz+'rem'; tracker.scaleGrow++; }; const b = document.createElement('button'); b.className = 'btn'; b.textContent = '決定'; b.onclick = nextPhase; a.append(b1, s, b2); mainArea.appendChild(a); mainArea.appendChild(b); }
 function setupSortPhase() { const a = document.createElement('div'); a.className = 'play-area'; const suits =['♠️', '♥️', '♣️', '♦️']; const colors = { '♠️': 'black', '♣️': 'black', '♥️': 'red', '♦️': 'red' }; const cards =[]; suits.forEach(s => { const c = document.createElement('div'); c.textContent = s; c.className = 'item'; c.dataset.color = colors[s]; c.style.left = Math.random() * 80 + '%'; c.style.top = Math.random() * 80 + '%'; makeDraggable(c, a, () => { tracker.sortDrags++; updateLog(`整理[${tracker.sortDrags}手]`); }); a.appendChild(c); cards.push(c); }); const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '整列完了'; btn.onclick = () => { const sortedCards = [...cards].sort((x, y) => parseInt(x.style.left) - parseInt(y.style.left)); const tops = cards.map(c => parseInt(c.style.top || 0)); if (Math.max(...tops) - Math.min(...tops) < 30) tracker.isAligned = true; let pattern = sortedCards.map(c => c.dataset.color).join('-'); if (pattern === 'black-red-black-red' || pattern === 'red-black-red-black') { tracker.isAlternating = true; updateLog("赤黒交互の秩序を検出！(Ti)"); } nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(btn); }
-function setupDarlingPhase() { const a = document.createElement('div'); a.className = 'play-area'; const l = document.createElement('div'); l.className = 'item'; l.style.cssText = "background:white; padding:15px; border:2px solid #ff66a3; border-radius:10px; width:70%; font-size:0.8rem; color:#333; z-index:2; left:10%; top:10%;"; l.innerHTML = `「ねえダーリン♡ あなたのその『完璧なシステム』、もし現実のノイズが一つでも混じったら、あっという間に崩れ去る『ただの砂上の楼閣』になっちゃうわよ……？🥺」<br><br><span style="font-size:0.6rem; color:gray;">- ILIより</span>`; const t = document.createElement('div'); t.textContent = '🗑️'; t.style.cssText = "font-size:3rem; position:absolute; bottom:10px; right:10px; z-index:1;"; const d = document.createElement('div'); d.textContent = '🗃️'; d.style.cssText = "font-size:3rem; position:absolute; bottom:10px; left:10px; z-index:1;"; makeDraggable(l, a, () => updateLog("手紙を触った"), () => { if(checkCollision(l, t)){ l.style.display='none'; tracker.letterAction="trashed"; }else if(checkCollision(l, d)){ l.style.display='none'; tracker.letterAction="drawer"; }}); a.append(d, t, l); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '次へ'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
+function setupDarlingPhase() {
+    const a = document.createElement('div'); a.className = 'play-area';
+    const l = document.createElement('div'); l.className = 'item';
+    l.style.cssText = "background:white; padding:15px; border:2px solid #ff66a3; border-radius:10px; width:70%; font-size:0.8rem; color:#333; z-index:2; left:10%; top:10%;";
+    l.innerHTML = `「ねえダーリン♡ あなたのその『完璧なシステム』、もし現実のノイズが一つでも混じったら、あっという間に崩れ去る『ただの砂上の楼閣』になっちゃうわよ……？🥺」<br><br><span style="font-size:0.6rem; color:gray;">- 某ILIより</span>`;
+    
+    const t = document.createElement('div'); t.textContent = '🗑️';
+    t.style.cssText = "font-size:3rem; position:absolute; bottom:10px; right:10px; z-index:1;";
+    const d = document.createElement('div'); d.textContent = '🗃️';
+    d.style.cssText = "font-size:3rem; position:absolute; bottom:10px; left:10px; z-index:1;";
+
+    makeDraggable(l, a, () => updateLog("手紙を触った"), () => {
+        if(checkCollision(l, t)){
+            l.style.display='none'; 
+            tracker.letterAction="trashed"; // ここを確実に記録！
+            updateLog("不快なので捨てた [Fi]");
+        } else if(checkCollision(l, d)){
+            l.style.display='none'; 
+            tracker.letterAction="drawer"; // ここを確実に記録！
+            updateLog("情報としてしまった [Ti]");
+        }
+    });
+
+    a.append(d, t, l);
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = '次へ';
+    b.onclick = () => {
+        if(tracker.letterAction === "ignored") updateLog("スルーした [Te]");
+        nextPhase();
+    };
+    mainArea.appendChild(a); mainArea.appendChild(b);
+}
 function setupChessPhase() { const a = document.createElement('div'); a.className = 'play-area'; const k = document.createElement('div'); k.textContent = '♚'; k.style.cssText = "position:absolute; left:45%; top:40%; font-size:4rem; color:#2c3e50;"; const p = document.createElement('div'); p.textContent = '♙'; p.className = 'item'; p.style.left = '10%'; p.style.top = '10%'; p.style.color = "#d32f2f"; makeDraggable(p, a, () => updateLog('見極め中...')); a.append(k, p); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '配置完了'; b.onclick = () => { const kr = k.getBoundingClientRect(), pr = p.getBoundingClientRect(); tracker.seChessDist = Math.floor(Math.abs(kr.left - pr.left) + Math.abs(kr.top - pr.top)); nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
 function setupFixClockPhase() { const a = document.createElement('div'); a.className = 'play-area'; const clock = document.createElement('div'); clock.textContent = '🕰️'; clock.style.cssText = "position:absolute; left:40%; top:30%; font-size:5rem; opacity:0.5;"; a.appendChild(clock); const sT = Date.now(); let fc = 0; for(let i=0; i<3; i++) { const g = document.createElement('div'); g.textContent = '⚙️'; g.className = 'item'; g.style.left = (Math.random()*60+10)+'%'; g.style.top = (Math.random()*60+10)+'%'; makeDraggable(g, a, () => updateLog("修理実行中..."), () => { if(checkCollision(g, clock)){ g.style.pointerEvents = 'none'; fc++; if(fc === 3) { tracker.fixClockTime = Date.now() - sT; updateLog(`修理: ${tracker.fixClockTime}ms`); activeIntervals.push(setTimeout(nextPhase, 600)); } } }); a.appendChild(g); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '完了'; b.onclick = () => { if(tracker.fixClockTime === 0) tracker.fixClockTime = Date.now() - sT; nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
 function setupTeObstaclePhase() { const a = document.createElement('div'); a.className = 'play-area'; const t = document.createElement('div'); t.textContent = '🗑️'; t.style.cssText = "position:absolute; right:5%; bottom:5%; font-size:4rem; z-index:1;"; a.appendChild(t); const sT = Date.now(); let rc = 0; for(let i=0; i<3; i++) { const r = document.createElement('div'); r.textContent = '🪨'; r.className = 'item'; r.style.left = (20+Math.random()*50)+'%'; r.style.top = (20+Math.random()*50)+'%'; r.style.zIndex = '2'; makeDraggable(r, a, () => updateLog("排除中..."), () => { if(checkCollision(r, t)) { r.style.display = 'none'; rc++; if(rc === 3) { tracker.obstacleTime = Date.now() - sT; activeIntervals.push(setTimeout(nextPhase, 600)); } } }); a.appendChild(r); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '諦める'; b.onclick = () => { if(tracker.obstacleTime === 0) tracker.obstacleTime = Date.now() - sT; nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(b); }
-function setupSeAttackPhase() { const a = document.createElement('div'); a.className = 'play-area'; a.style.overflow = 'hidden'; const s = document.createElement('div'); s.textContent = '🃏'; s.style.cssText = "position:absolute; right:10%; top:30%; font-size:5rem; transition:0.1s;"; a.appendChild(s); let p = 10; const startAtk = Date.now(); const iv = setInterval(() => { p += 2.5; s.style.right = p + '%'; if (p > 85) { clearInterval(iv); updateLog("押し切られた..."); nextPhase(); } }, 100); activeIntervals.push(iv); const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = '⚔️ 押し返す！'; b.style.cssText = "position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:10; padding:15px 30px;"; b.onclick = () => { p -= 7; tracker.attackClicks++; s.style.right = p + '%'; if (p < 0) { clearInterval(iv); tracker.attackTime = Date.now() - startAtk; updateLog(`完全撃退！タイム: ${tracker.attackTime}ms`); activeIntervals.push(setTimeout(nextPhase, 500)); } }; a.appendChild(b); mainArea.appendChild(a); }
+function setupSeAttackPhase() {
+    const a = document.createElement('div'); a.className = 'play-area'; a.style.overflow = 'hidden';
+    const s = document.createElement('div'); s.textContent = '🃏';
+    s.style.cssText = "position:absolute; right:10%; top:30%; font-size:5rem; transition:0.1s;";
+    a.appendChild(s);
+    let p = 10; const startAtk = Date.now();
+    
+    // 兵士がジリジリ迫ってくるタイマー
+    const iv = setInterval(() => {
+        p += 2.5; s.style.right = p + '%';
+        if (p > 85) { 
+            clearInterval(iv); 
+            tracker.attackTime = 9999; // 失敗時は大きな数字をいれる
+            updateLog("押し切られた..."); 
+            setTimeout(nextPhase, 800); 
+        }
+    }, 100);
+    activeIntervals.push(iv);
+
+    const b = document.createElement('button'); b.className = 'btn'; b.innerHTML = '⚔️ 押し返す！';
+    // touch-action: manipulation でダブルタップズームを無効化！
+    b.style.cssText = "position:absolute; bottom:10px; left:50%; transform:translateX(-50%); z-index:10; padding:15px 30px; touch-action: manipulation;";
+    
+    const pushBack = (e) => {
+        if(e.cancelable) e.preventDefault(); // スマホの余計な挙動をカット
+        p -= 7; tracker.attackClicks++; s.style.right = p + '%';
+        updateLog(`撃退連打: ${tracker.attackClicks}回`);
+        if (p < 0) {
+            clearInterval(iv);
+            tracker.attackTime = Date.now() - startAtk; // 撃退までにかかった時間を記録
+            updateLog(`完全撃退！タイム: ${tracker.attackTime}ms`);
+            activeIntervals.push(setTimeout(nextPhase, 500));
+        }
+    };
+    
+    // マウスとタッチ両方対応
+    b.addEventListener('touchstart', pushBack, {passive: false});
+    b.addEventListener('mousedown', pushBack);
+    
+    a.appendChild(b); mainArea.appendChild(a);
+}
 function setupSiCushionPhase() { const a = document.createElement('div'); a.className = 'play-area'; const m = document.createElement('div'); m.textContent = '🍄'; m.style.cssText = "position:absolute; left:40%; top:50%; font-size:5rem;"; const c = document.createElement('div'); c.textContent = '🍪'; c.className = 'item'; makeDraggable(c, a, () => tracker.siMicroMovements++); a.append(m, c); const b = document.createElement('button'); b.className = 'btn'; b.textContent = '完了'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
 function setupRosesPhase() { const a = document.createElement('div'); a.style.marginTop = '20px'; for(let i=0; i<5; i++){ const r = document.createElement('div'); r.textContent = '🌹'; r.className = 'rose'; r.onclick = () => { if(!r.classList.contains('painted')){ r.classList.add('painted'); tracker.rosesPainted++; }}; a.appendChild(r); } const b = document.createElement('button'); b.className = 'btn'; b.textContent = '塗り終わり'; b.onclick = nextPhase; mainArea.appendChild(a); mainArea.appendChild(b); }
 function setupHatsPhase() { const a = document.createElement('div'); a.className = 'choice-area';['🎩','👒','🧢'].forEach(h=>{ const i = document.createElement('div'); i.textContent = h; i.style.fontSize = '4rem'; i.style.cursor = 'pointer'; i.onclick = () => { tracker.choice = h; updateLog(`帽子: ${h}`); nextPhase(); }; a.appendChild(i); }); mainArea.appendChild(a); }
@@ -296,6 +366,7 @@ function saveImage() {
 /* ================== 🐛 芋虫 (タッチ対応版) ================== */
 const bug = document.getElementById('caterpillar'); const speech = document.getElementById('caterpillar-speech');
 let bugPos = -100; let bugMoving = false;
+
 setInterval(() => {
     if (Math.random() < 0.5 && !bugMoving && tracker.bugClicks < 30) {
         bugMoving = true; bugPos = -100;
@@ -305,14 +376,42 @@ setInterval(() => {
         }, 30);
     }
 }, 3000);
-const lsiQuotes =["……秩序を乱すな。", "時間は正確に。", "非合理的だ。", "干渉するな。", "無駄が多い。"];
+
+// LSI-Niらしい理屈っぽいセリフ集
+const lsiQuotes = [
+    "……なんだ。僕の規則的な歩行を邪魔する気か？",
+    "時間は正確に守りたまえ。1秒のズレも許されん。",
+    "非合理なタッチだ。君のエネルギー代謝はどうなっている？",
+    "僕のTiSiに干渉しないでくれるか。",
+    "無駄が多いな。もっと効率的な経路があるはずだ。",
+    "おい、いい加減にしろ。論理が崩れるだろう。",
+    "……やめたまえ。不快な刺激はSiを乱す。"
+];
+
 if(bug) {
     const hitBug = (e) => {
         if(e.cancelable) e.preventDefault();
         if (tracker.bugClicks >= 30) return;
-        tracker.bugClicks++; updateLog(`芋虫干渉[${tracker.bugClicks}回]`);
-        if (tracker.bugClicks >= 30) { bug.textContent = '💥'; if(speech) { speech.textContent = "SLEパパに圧殺されました"; speech.style.opacity = 1; } return; }
-        if(speech) { speech.textContent = lsiQuotes[tracker.bugClicks % lsiQuotes.length]; speech.style.opacity = 1; setTimeout(() => { speech.style.opacity = 0; }, 2000); }
+        tracker.bugClicks++;
+        updateLog(`芋虫干渉[${tracker.bugClicks}回]`);
+        
+        // 30回タップ＝圧殺（SLEパパ降臨）
+        if (tracker.bugClicks >= 30) {
+            bug.textContent = '💥';
+            if(speech) {
+                speech.textContent = "システムダウン……！！論理が……崩壊する……ッ（SLEパパに敗北）";
+                speech.style.color = "red";
+                speech.style.opacity = 1;
+            }
+            updateLog("警告：LSIの秩序がSLEの暴力に屈しました");
+            return;
+        }
+
+        if(speech) {
+            speech.textContent = lsiQuotes[tracker.bugClicks % lsiQuotes.length];
+            speech.style.opacity = 1; 
+            setTimeout(() => { speech.style.opacity = 0; }, 2000);
+        }
     };
     bug.addEventListener('mousedown', hitBug);
     bug.addEventListener('touchstart', hitBug, {passive:false});
