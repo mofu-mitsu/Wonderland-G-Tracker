@@ -22,9 +22,15 @@ const backBtn = document.getElementById('back-btn');
 
 function updateLog(text) {
     if (liveLog) {
-        // もし引数に既に「行動ログ: 」が含まれていたら除去して、二重にならないようにする
-        const cleanText = text.replace("行動ログ: ", "");
-        liveLog.textContent = "行動ログ: " + cleanText;
+        // もし送られてきた文字の中に「行動ログ: 」が入ってたら、それを一旦全部消す！
+        const cleanText = text.replace(/行動ログ:\s*/g, "");
+        
+        if (cleanText === "") {
+            liveLog.textContent = "行動ログ: 観測待機中...";
+        } else {
+            // 改めて「行動ログ: 」を1つだけ付けて表示する
+            liveLog.textContent = "行動ログ: " + cleanText;
+        }
     }
 }
 
@@ -70,7 +76,12 @@ function prevPhase() {
 }
 
 function loadPhase() {
+    backBtn.style.display = 'block';
     if(progressDisplay) progressDisplay.textContent = `${currentPhaseIndex + 1} / ${randomizedPhases.length}`;
+
+    // ★この1行を追加！ フェーズが切り替わったらログを「待機中」に戻す
+    updateLog(""); 
+
     if(backBtn) backBtn.innerHTML = (currentPhaseIndex === 0) ? '◀ タイトルへ' : '◀ 前の問題へ';
 
     const phase = randomizedPhases[currentPhaseIndex];
