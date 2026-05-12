@@ -124,6 +124,7 @@ const appData = {
         if (logs.rosesPainted > 2) scores.Fe += (logs.rosesPainted * 5);
         if (logs.boundaryAction === 'melted') scores.Fe += 25; 
         if (logs.boundaryAction === 'removed') { scores.Fe += 15; scores.Ne += 10; } 
+        if (logs.letterAction === "touched") scores.Fe += 15; // ★追加：なでなでした
 
         const missionMap = {
             "ILE":["Ne", "Te"], "ESE": ["Fe", "Se"], "SEI":["Si", "Fi"], "LII":["Ti", "Ni"],
