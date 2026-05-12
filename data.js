@@ -52,8 +52,10 @@ const appData = {
         if (logs.hoverTime > 3000) { scores.Fi += 10; scores.Ni += 10; } // 内なる価値観・予測の迷い
 
         // Ti: 論理処理
-        if (logs.isAligned) scores.Ti += 15;
-        if (logs.isAlternating) scores.Ti += 20; // ★新：赤黒交互ボーナス
+        if (logs.isAligned) {
+            scores.Ti += 15; // まず整列で+15
+            if (logs.isAlternating) {
+                scores.Ti += 25; // 整列した上で交互なら、さらに+35（合計50！）
         if (logs.mirrorCorrect > 0) scores.Ti += 10;
         if (logs.letterAction === "drawer") scores.Ti += 10; 
         if (logs.frameError === 0) scores.Ti += 15; 
