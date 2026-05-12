@@ -218,7 +218,7 @@ function setupSortPhase() { const a = document.createElement('div'); a.className
 function setupDarlingPhase() {
     const a = document.createElement('div'); a.className = 'play-area';
     const l = document.createElement('div'); l.className = 'item';
-    l.style.cssText = "background:white; padding:15px; border:2px solid #ff66a3; border-radius:10px; width:70%; font-size:0.8rem; color:#333; z-index:2; left:10%; top:10%;";
+    l.style.cssText = "background:white; padding:15px; border:2px solid #ff66a3; border-radius:10px; width:70%; font-size:0.8rem; color:#333; z-index:2; left:10%; top:10%; cursor:grab;";
     l.innerHTML = `「ねえダーリン♡ あなたのその『完璧なシステム』、もし現実のノイズが一つでも混じったら、あっという間に崩れ去る『ただの砂上の楼閣』になっちゃうわよ……？🥺」<br><br><span style="font-size:0.6rem; color:gray;">- 某ILIより</span>`;
     
     const t = document.createElement('div'); t.textContent = '🗑️';
@@ -226,22 +226,35 @@ function setupDarlingPhase() {
     const d = document.createElement('div'); d.textContent = '🗃️';
     d.style.cssText = "font-size:3rem; position:absolute; bottom:10px; left:10px; z-index:1;";
 
-    makeDraggable(l, a, () => updateLog("手紙を触った"), () => {
+    // ドラッグ操作の設定
+    makeDraggable(l, a, () => {
+        // ★ 触った瞬間に、まず「Fe（感情的反応）」として記録開始
+        if (tracker.letterAction === "ignored") {
+            tracker.letterAction = "touched";
+            updateLog("手紙に反応した");
+        }
+    }, () => {
+        // ドロップした瞬間の判定
         if(checkCollision(l, t)){
             l.style.display='none'; 
-            tracker.letterAction="trashed"; // ここを確実に記録！
-            updateLog("不快なので捨てた ");
+            tracker.letterAction="trashed"; // 捨てた (Fi)
+            updateLog("不快なので捨てた");
         } else if(checkCollision(l, d)){
             l.style.display='none'; 
-            tracker.letterAction="drawer"; // ここを確実に記録！
-            updateLog("情報としてしまった ");
+            tracker.letterAction="drawer"; // しまった (Ti)
+            updateLog("情報としてしまった");
+        } else {
+            // どこにも入れずに離したなら「なでなで（Fe）」の状態を維持
+            updateLog("手紙をなでている...");
         }
     });
 
     a.append(d, t, l);
     const b = document.createElement('button'); b.className = 'btn'; b.textContent = '次へ';
     b.onclick = () => {
-        if(tracker.letterAction === "ignored") updateLog("スルーした [Te]");
+        if(tracker.letterAction === "ignored") {
+            updateLog("スルーして次へ [Te]");
+        }
         nextPhase();
     };
     mainArea.appendChild(a); mainArea.appendChild(b);
