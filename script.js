@@ -22,14 +22,11 @@ const backBtn = document.getElementById('back-btn');
 
 function updateLog(text) {
     if (liveLog) {
-        // もし送られてきた文字の中に「行動ログ: 」が入ってたら、それを一旦全部消す！
-        const cleanText = text.replace(/行動ログ:\s*/g, "");
-        
-        if (cleanText === "") {
+        if (!text || text === "") {
             liveLog.textContent = "行動ログ: 観測待機中...";
         } else {
-            // 改めて「行動ログ: 」を1つだけ付けて表示する
-            liveLog.textContent = "行動ログ: " + cleanText;
+            // ここで1回だけ「行動ログ: 」を付ける！
+            liveLog.textContent = "行動ログ: " + text;
         }
     }
 }
