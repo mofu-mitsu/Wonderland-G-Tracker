@@ -13,7 +13,7 @@ const appData = {
         { id: 'p11', type: 'te_obstacle', title: '🪨 障害物の排除', instruction: '邪魔な岩を素早くゴミ箱(🗑️)に片付けて！' },
         { id: 'p12', type: 'te_task', title: '📑 タスク処理', instruction: '1から5の数字を順番に素早くタップ！' },
         { id: 'p13', type: 'se_attack', title: '⚔️ 兵士の撃退', instruction: '迫りくるトランプ兵を連打で押し返せ！' },
-        { id: 'p14', type: 'escape', title: '🏃‍♀️ 逃走劇', instruction: 'トランプ兵から5秒間マウスで逃げ切れ！' },
+        { id: 'p14', type: 'escape', title: '🏃‍♀️ 逃走劇', instruction: 'トランプ兵から5秒間逃げ切れ！' },
         { id: 'p15', type: 'si_tea', title: '🍵 お茶の温度', instruction: 'バーが動くよ！「適温(緑)」の瞬間にストップ！' },
         { id: 'p16', type: 'si_frame', title: '🖼️ 歪んだ額縁', instruction: 'ドラッグして、額縁の傾きを完全に真っ直ぐ(0度)に直して！' },
         { id: 'p17', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: '座布団を一番しっくりくる位置に微調整して。' },
