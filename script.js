@@ -214,7 +214,58 @@ function setupClickerPhase() { const a = document.createElement('div'); a.classN
 }
 
 function setupScalePhase() { const a = document.createElement('div'); a.style.marginTop = '20px'; const s = document.createElement('div'); s.textContent = '🍄'; s.style.fontSize = '5rem'; let sz = 5; const b1 = document.createElement('span'); b1.className = 'fa-solid fa-wine-bottle scale-btn'; b1.onclick = () => { sz--; s.style.fontSize = sz+'rem'; tracker.scaleShrink++; }; const b2 = document.createElement('span'); b2.className = 'fa-solid fa-cookie-bite scale-btn'; b2.onclick = () => { sz++; s.style.fontSize = sz+'rem'; tracker.scaleGrow++; }; const b = document.createElement('button'); b.className = 'btn'; b.textContent = '決定'; b.onclick = nextPhase; a.append(b1, s, b2); mainArea.appendChild(a); mainArea.appendChild(b); }
-function setupSortPhase() { const a = document.createElement('div'); a.className = 'play-area'; const suits =['♠️', '♥️', '♣️', '♦️']; const colors = { '♠️': 'black', '♣️': 'black', '♥️': 'red', '♦️': 'red' }; const cards =[]; suits.forEach(s => { const c = document.createElement('div'); c.textContent = s; c.className = 'item'; c.dataset.color = colors[s]; c.style.left = Math.random() * 80 + '%'; c.style.top = Math.random() * 80 + '%'; makeDraggable(c, a, () => { tracker.sortDrags++; updateLog(`整理[${tracker.sortDrags}手]`); }); a.appendChild(c); cards.push(c); }); const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '整列完了'; btn.onclick = () => { const sortedCards = [...cards].sort((x, y) => parseInt(x.style.left) - parseInt(y.style.left)); const tops = cards.map(c => parseInt(c.style.top || 0)); if (Math.max(...tops) - Math.min(...tops) < 30) tracker.isAligned = true; let pattern = sortedCards.map(c => c.dataset.color).join('-'); if (pattern === 'black-red-black-red' || pattern === 'red-black-red-black') { tracker.isAlternating = true; updateLog("赤黒交互の秩序を検出！(Ti)"); } nextPhase(); }; mainArea.appendChild(a); mainArea.appendChild(btn); }
+function setupSortPhase() {
+    const a = document.createElement('div'); a.className = 'play-area';
+    const suits = ['♠️', '♥️', '♣️', '♦️'];
+    const colors = { '♠️': 'black', '♣️': 'black', '♥️': 'red', '♦️': 'red' };
+    const cards = [];
+
+    suits.forEach(s => {
+        const c = document.createElement('div'); 
+        c.textContent = s; 
+        c.className = 'item';
+        c.dataset.color = colors[s]; // 色を覚えさせる
+        c.style.left = Math.random() * 80 + '%'; 
+        c.style.top = Math.random() * 80 + '%';
+        
+        makeDraggable(c, a, () => { 
+            tracker.sortDrags++; 
+            updateLog(`整理中... [${tracker.sortDrags}手]`); 
+        });
+        a.appendChild(c); 
+        cards.push(c);
+    });
+
+    const btn = document.createElement('button'); 
+    btn.className = 'btn'; 
+    btn.textContent = '整列完了';
+
+    btn.onclick = () => {
+        // 1. まず「高さ（Y座標）」が揃っているかチェック
+        const tops = cards.map(c => parseInt(c.style.top || 0));
+        const isHorizontal = (Math.max(...tops) - Math.min(...tops)) < 30;
+
+        if (isHorizontal) {
+            tracker.isAligned = true; // ここで初めて「整列フラグ」が立つ
+            updateLog("整列を確認！");
+
+            // 2. 整列している場合のみ、「赤黒の並び順」をチェック
+            const sortedCards = [...cards].sort((x, y) => parseInt(x.style.left) - parseInt(y.style.left));
+            let pattern = sortedCards.map(c => c.dataset.color).join('-');
+            
+            if (pattern === 'black-red-black-red' || pattern === 'red-black-red-black') {
+                tracker.isAlternating = true; // 「交互フラグ」も立てる！
+                updateLog("完璧な秩序：整列 ＆ 赤黒交互を検出！ [Ti]");
+            }
+        } else {
+            updateLog("整列されていません。");
+        }
+        
+        nextPhase();
+    };
+    mainArea.appendChild(a); 
+    mainArea.appendChild(btn);
+}
 function setupDarlingPhase() {
     const a = document.createElement('div'); a.className = 'play-area';
     const l = document.createElement('div'); l.className = 'item';
