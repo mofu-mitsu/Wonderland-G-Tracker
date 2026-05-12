@@ -20,7 +20,13 @@ const progressDisplay = document.getElementById('progress-counter');
 const exitBtn = document.getElementById('exit-btn');
 const backBtn = document.getElementById('back-btn');
 
-function updateLog(text) { if(liveLog) liveLog.textContent = "行動ログ: " + text; }
+function updateLog(text) {
+    if (liveLog) {
+        // もし引数に既に「行動ログ: 」が含まれていたら除去して、二重にならないようにする
+        const cleanText = text.replace("行動ログ: ", "");
+        liveLog.textContent = "行動ログ: " + cleanText;
+    }
+}
 
 document.getElementById('start-btn').addEventListener('click', () => {
     const input = document.getElementById('user-identity');
@@ -40,8 +46,12 @@ backBtn.onclick = prevPhase;
 
 function clearAllIntervals() { 
     activeIntervals.forEach(id => { clearInterval(id); clearTimeout(id); }); 
-    activeIntervals =[]; 
-    document.body.style.transform = ''; document.body.style.filter = ''; 
+    activeIntervals = []; 
+    
+    // 画面のバグ演出を完全に初期化
+    document.body.style.transform = 'none'; 
+    document.body.style.filter = 'none'; 
+    document.body.style.background = ''; // 望遠鏡の背景もリセット
 }
 
 function nextPhase() {
@@ -212,11 +222,11 @@ function setupDarlingPhase() {
         if(checkCollision(l, t)){
             l.style.display='none'; 
             tracker.letterAction="trashed"; // ここを確実に記録！
-            updateLog("不快なので捨てた [Fi]");
+            updateLog("不快なので捨てた ");
         } else if(checkCollision(l, d)){
             l.style.display='none'; 
             tracker.letterAction="drawer"; // ここを確実に記録！
-            updateLog("情報としてしまった [Ti]");
+            updateLog("情報としてしまった ");
         }
     });
 
