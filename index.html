@@ -3,23 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>不思議の国のモデルG診断 🃏☕️</title>
+    
+    <!-- 🔍 SEO対策セクション -->
+    <title>Wonderland G-Tracker | モデルG・ソシオニクス行動観察診断</title>
+    <meta name="description" content="マウスの動きや迷った時間から、あなたの無意識のエネルギー代謝を暴き出す。不思議の国のアリスをモチーフにした次世代ソシオニクス（モデルG）診断。">
+    <meta name="keywords" content="ソシオニクス,モデルG,MBTI,心理機能,行動観察,不思議の国のアリス,性格診断,LII,INTJ">
+    <meta name="author" content="Mitsuki">
+
+    <!-- 📱 SNSシェア用 (OGP) -->
+    <meta property="og:title" content="Wonderland G-Tracker | モデルG行動観察診断">
+    <meta property="og:description" content="従来の質問紙ではない、あなたの『挙動』そのものを観測する新しい性格診断。">
+    <meta property="og:image" content="https://mofu-mitsu.github.io/Wonderland-G-Tracker/ogp.png">
+    <meta property="og:url" content="https://mofu-mitsu.github.io/Wonderland-G-Tracker">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- 🎨 アイコン設定 (favicon.icoをリポジトリに入れてね！) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎩</text></svg>">
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div id="app-container">
+        <!-- 進行度カウンター -->
+        <div id="progress-counter" style="display:none;"></div>
+        
+        <!-- ナビゲーションボタン（JSで切り替え） -->
+        <button id="exit-btn" class="nav-ui" onclick="window.location.href='https://mofu-mitsu.github.io/lab.html'">🚪 EXIT</button>
+        <button id="back-btn" class="nav-ui" style="display:none;">◀ 戻る</button>
+
         <header>
             <h1><i class="fa-solid fa-hat-wizard"></i> Wonderland G-Tracker</h1>
             <p id="instruction">アリスのように、直感のままに進んでね…</p>
         </header>
 
+        <!-- index.html の setup-area 部分をこれに差し替えてね！ -->
         <main id="main-area">
-            <!-- 最初に自認を入れるバー -->
             <div id="setup-area">
-                <p>あなたの自認タイプを教えて（INTJ, LII-Ni, 5w6など）</p>
-                <input type="text" id="user-identity" placeholder="例：INTJ LII-Ni 5w6" class="input-bar">
+                <div id="model-g-intro" style="text-align:left; background:rgba(255,255,255,0.6); padding:20px; border-radius:10px; margin-bottom:20px; font-size:0.9rem; line-height:1.6; border:1px solid var(--text-dark);">
+                    <h2 style="font-size:1.1rem; color:var(--accent-red); margin-top:0;"><i class="fa-solid fa-flask-vial"></i> 被検体：観測前ガイダンス</h2>
+                    <p>この診断は、ソシオニクスの最新理論<b>『モデルG（グレンコ・モデル）』</b>に基づいた、世界でも類を見ない<b>行動観察型診断</b>です。</p>
+                    <p>全23問の不思議な世界のギミックを通して、あなたの回答内容だけでなく、以下の項目を多角的に分析します。</p>
+                    <ul style="padding-left:20px; margin:10px 0;">
+                        <li><b>迷いの時間：</b> 思考プロセス（Ti/Fi/Ni）の深さを計測。</li>
+                        <li><b>操作の正確性：</b> 空間の微細な調整（Si）や論理的秩序（Ti）へのこだわり。</li>
+                        <li><b>エネルギーの出力：</b> 瞬発的な衝動（Se）や、無意識のカオス（Ne）への耐性。</li>
+                    </ul>
+                    <p>従来の質問紙形式では到達できない、あなたの無意識下に眠る<b>『社会的使命（Social Mission）』</b>を暴き出しましょう。</p>
+                    <p style="text-align:center; font-weight:bold; color:var(--accent-red);">ーーそれでは、ウサギ穴の先でお会いしましょう。</p>
+                </div>
+                
+                <p>自認タイプを入力してください（任意）</p>
+                <input type="text" id="user-identity" placeholder="例：INTJ LII 5w6" class="input-bar">
                 <br>
                 <button id="start-btn" class="btn"><i class="fa-solid fa-key"></i> 扉を開ける</button>
             </div>
