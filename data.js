@@ -114,14 +114,37 @@ const appData = {
             "LSE":["Te", "Se"], "IEE": ["Ne", "Fe"], "EII":["Fi", "Ni"], "SLI": ["Si", "Ti"]
         };
 
-        let maxScore = -1; let bestType = "LII"; let bestPair = "";
+        // ★ ランキング用の配列を作成 ★
+        let rankings = [];
+
         for (const [type, funcs] of Object.entries(missionMap)) {
-            const currentScore = (scores[funcs[0]] * 1.5) + scores[funcs[1]]; 
-            if (currentScore > maxScore) { maxScore = currentScore; bestType = type; bestPair = `${funcs[0]}-${funcs[1]}`; }
+            // 第1機能を1.5倍にして重み付けし、スコアを計算
+            const currentScore = Math.round((scores[funcs[0]] * 1.5) + scores[funcs[1]]);
+            rankings.push({
+                type: type,
+                pair: `${funcs[0]}-${funcs[1]}`,
+                matchScore: currentScore
+            });
         }
 
-        if (logs.bugClicks >= 30) { bestType = "SLE"; bestPair = "Se-Te"; }
+        // スコアが高い順に並び替え（降順ソート）
+        rankings.sort((a, b) => b.matchScore - a.matchScore);
 
-        return { key: bestType, scores: scores, topPair: bestPair };
-    }
+        // SLEパパ（芋虫圧殺）特別ルート
+        if (logs.bugClicks >= 30) { 
+            // 強制的にSLEを1位に引き上げる
+            const sleIndex = rankings.findIndex(r => r.type === "SLE");
+            if (sleIndex > -1) {
+                const sleObj = rankings.splice(sleIndex, 1)[0];
+                sleObj.matchScore = 999; // 圧倒的暴力スコア
+                rankings.unshift(sleObj);
+            }
+        }
+
+        const bestType = rankings[0].type;
+        const bestPair = rankings[0].pair;
+
+        // ランキングのデータごと返す！
+        return { key: bestType, scores: scores, topPair: bestPair, rankings: rankings };
+    } // calculateType 終了
 };
