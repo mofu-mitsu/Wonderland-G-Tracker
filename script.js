@@ -327,8 +327,28 @@ function showResult() {
     clearAllIntervals(); instruction.textContent = ""; document.querySelector('h1').innerHTML = '🎩 観測終了 ☕️'; backBtn.style.display = 'none';
     if(progressDisplay) progressDisplay.style.display = 'none';
 
-    const res = appData.calculateType(tracker); const typeData = appData.socionicsTypes[res.key];
+    const res = appData.calculateType(tracker); 
+    const typeData = appData.socionicsTypes[res.key];
+    
+    // スコア文字列
     const scoreStr = `Ti:${res.scores.Ti} / Ni:${res.scores.Ni} / Ne:${res.scores.Ne} / Se:${res.scores.Se} / Te:${res.scores.Te} / Si:${res.scores.Si} / Fe:${res.scores.Fe} / Fi:${res.scores.Fi}`;
+    
+    // ★ ランキングのHTMLとテキストを生成 ★
+    let rankingHtml = `<div style="margin-top:15px; text-align:left; background:#fffdf5; padding:10px; border-radius:10px; border:1px solid #ccc;">`;
+    rankingHtml += `<h4 style="color:var(--accent-red); margin:0 0 10px 0; font-size:0.95rem;">📊 適合度ランキング (Top 5)</h4>`;
+    let rankingText = "【適合度ランキング】\n"; // GAS送信用のテキスト
+
+    for(let i = 0; i < 5; i++) {
+        let rData = res.rankings[i];
+        let tData = appData.socionicsTypes[rData.type];
+        let medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ` ${i+1}位 `;
+        rankingHtml += `<div style="margin-bottom:5px; font-size:0.85rem; border-bottom:1px dashed #ddd; padding-bottom:5px;">`;
+        rankingHtml += `<b>${medal} ${tData.name}</b> <span style="color:#888;">(適合度: ${rData.matchScore} / ${rData.pair})</span>`;
+        rankingHtml += `</div>`;
+        rankingText += `${i+1}位: ${tData.name} (スコア: ${rData.matchScore})\n`;
+    }
+    rankingHtml += `</div>`;
+
     const logStr = `・迷い時間: ${(tracker.choiceTime + tracker.hoverTime)/1000}秒\n・カップ移動: ${tracker.cupDrags}回\n・ウサギ捕獲: ${tracker.rabbitClicks}回\n・タスク処理: ${tracker.taskTime}ms\n・兵士撃退タイム: ${tracker.attackTime}ms\n・逃走タイム: ${tracker.escapeTime}ms\n・整列Tiフラグ: ${tracker.isAligned}\n・赤黒交互Tiフラグ: ${tracker.isAlternating}\n・手紙の扱い: ${tracker.letterAction}\n・境界線: ${tracker.boundaryAction} (${Math.round(tracker.boundaryX)}px)\n・額縁のズレ: ${Math.round(tracker.frameError)}度\n・望遠鏡ピント: ${tracker.niFocus}\n・チェス制圧: ${tracker.seChessDist}px\n・時計修理: ${tracker.fixClockTime}ms\n・岩の排除: ${tracker.obstacleTime}ms\n・お茶温度誤差: ${tracker.teaError.toFixed(1)}%\n・BGM熱量: ${tracker.bgmVolume}%\n・カオス連打: ${tracker.chaosClicks}回\n・芋虫干渉: ${tracker.bugClicks}回`;
 
     mainArea.innerHTML = `
@@ -337,10 +357,15 @@ function showResult() {
             <h3 style="margin:5px 0; color:#333;">社会使命: ${typeData.mission}</h3>
             <p style="font-weight:bold; color:#666; font-size:0.9rem;">自認: ${tracker.userIdentity || '未入力'}</p>
             <div style="background:rgba(255,255,255,0.8); padding:15px; border-radius:12px; margin:15px 0; border:2px solid var(--text-dark); text-align:left; line-height:1.6; font-size:0.95rem; white-space:pre-wrap;">${typeData.desc}</div>
+            
             <div style="text-align:left; background:#eee; padding:12px; border-radius:10px; font-size:0.85rem;">
                 <b style="color:var(--accent-red)">【機能スコア (Top: ${res.topPair})】</b><br>${scoreStr}
             </div>
-            <div style="font-size:0.65rem; color:#666; margin-top:10px; text-align:left; display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+
+            <!-- ★ ここにランキングを表示 ★ -->
+            ${rankingHtml}
+
+            <div style="font-size:0.65rem; color:#666; margin-top:15px; text-align:left; display:grid; grid-template-columns:1fr 1fr; gap:3px;">
                 ${logStr.replace(/\n/g, '<br>')}
             </div>
         </div>
@@ -353,9 +378,14 @@ function showResult() {
         <p id="save-msg" style="font-size:0.8rem; color:#d32f2f; display:none; margin-top:10px;">↓下に画像が生成されたよ！スマホは長押しで保存してね！↓</p>
     `;
 
-    // GAS送信
+    // GAS送信 (ランキングデータも追加！)
     const gasUrl = "https://script.google.com/macros/s/AKfycby2SEmP5d0t_F2XEeEsIeNLR-R9-yf1J1UC1AGykCYETfPa1Mbw_Duu4RFx-SNuUmCK/exec"; 
-    const payload = { userIdentity: tracker.userIdentity || '未入力', resultType: typeData.name, scores: scoreStr, logs: logStr };
+    const payload = { 
+        userIdentity: tracker.userIdentity || '未入力', 
+        resultType: typeData.name, 
+        scores: scoreStr + "\n\n" + rankingText, // スコアの下にランキングをくっつけて送る
+        logs: logStr 
+    };
     fetch(gasUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: JSON.stringify(payload) }).catch(e => console.log(e));
 }
 
