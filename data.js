@@ -75,7 +75,7 @@ const appData = {
         scores.Ne += Math.floor((logs.cupDrags || 0) * 0.5);
         if (logs.boundaryAction === 'removed') scores.Ne += 15; 
         scores.Ne += Math.min(30, (logs.rabbitClicks || 0) * 3); 
-
+        scores.Ne += Math.floor((logs.drawDistance || 0) / 500);
         // ★ Se: 制圧と見極め ★
         scores.Se += Math.min(30, (logs.rabbitClicks || 0) * 3); 
         if ((logs.attackTime || 0) > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
@@ -109,7 +109,7 @@ const appData = {
         if (logs.boundaryAction === 'melted') scores.Fe += 25; 
         if (logs.boundaryAction === 'removed') { scores.Fe += 15; scores.Ne += 10; } 
         if (logs.letterAction === "touched") scores.Fe += 15; 
-
+        scores.Fe += Math.floor((logs.drawDistance || 0) / 400);
         // ★ プロファイルマッチング ★
         const missionMap = {
             "ILE":["Ne", "Te"], "ESE": ["Fe", "Se"], "SEI":["Si", "Fi"], "LII":["Ti", "Ni"],
