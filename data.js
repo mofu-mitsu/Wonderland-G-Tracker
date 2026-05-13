@@ -47,66 +47,65 @@ const appData = {
     calculateType: function(logs) {
         let scores = { Ti:0, Ne:0, Se:0, Ni:0, Te:0, Si:0, Fe:0, Fi:0 };
 
-        // ★ 迷った時間の判定強化 ★
-        if (logs.choiceTime > 2000) scores.Ti += 10; 
-        if (logs.hoverTime > 3000) { scores.Fi += 10; scores.Ni += 10; } 
+        // ★ 迷った時間の判定
+        if ((logs.choiceTime || 0) > 2000) scores.Ti += 10; 
+        if ((logs.hoverTime || 0) > 3000) { scores.Fi += 10; scores.Ni += 10; } 
 
         // ★ Ti: 論理処理 ★
         if (logs.isAligned) {
-            scores.Ti += 15; // まず整列で+15
+            scores.Ti += 15; 
             if (logs.isAlternating) {
-                scores.Ti += 25; // 整列した上で交互なら、さらに+25
+                scores.Ti += 25; 
             }
-        } // ← 【修正箇所】ここで確実にカッコを閉じる！
-
-        if (logs.mirrorCorrect > 0) scores.Ti += 10;
+        } 
+        if ((logs.mirrorCorrect || 0) > 0) scores.Ti += 10;
         if (logs.letterAction === "drawer") scores.Ti += 10; 
-        if (logs.frameError === 0) scores.Ti += 15; 
+        if ((logs.frameError || 100) === 0) scores.Ti += 15; 
 
         // ★ Ni: 時間と予測 ★
-        if (logs.niFocus >= 33) {
-            scores.Ni += Math.floor(logs.niFocus * 0.4); 
+        if ((logs.niFocus || 50) >= 33) {
+            scores.Ni += Math.floor((logs.niFocus || 50) * 0.4); 
         }
-        if (logs.hoverTime > 2000) scores.Ni += 15; 
-        if (logs.scaleShrink > logs.scaleGrow) scores.Ni += 15; 
+        if ((logs.hoverTime || 0) > 2000) scores.Ni += 15; 
+        if ((logs.scaleShrink || 0) > (logs.scaleGrow || 0)) scores.Ni += 15; 
 
-        // ★ Ne: 可能性とカオス ★
-        scores.Ne += Math.min(30, logs.chaosClicks * 2); 
-        scores.Ne += Math.floor(logs.escapeDistance / 200); 
-        scores.Ne += Math.floor(logs.cupDrags * 0.5);
+        // ★ Ne: 可能性とカオス (NaN対策ガード実装！) ★
+        scores.Ne += Math.min(30, (logs.chaosClicks || 0) * 2); 
+        scores.Ne += Math.floor((logs.escapeDistance || 0) / 200); 
+        scores.Ne += Math.floor((logs.cupDrags || 0) * 0.5);
         if (logs.boundaryAction === 'removed') scores.Ne += 15; 
-        scores.Ne += Math.min(30, logs.rabbitClicks * 3); // みつき要望：Neはウサギも追う
+        scores.Ne += Math.min(30, (logs.rabbitClicks || 0) * 3); 
 
         // ★ Se: 制圧と見極め ★
-        scores.Se += Math.min(30, logs.rabbitClicks * 3); 
-        if (logs.attackTime > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
-        if (logs.seChessDist < 30) scores.Se += 20;
-        if (logs.escapeTime >= 5000) scores.Se += 15;
-        if (logs.bugClicks >= 30) scores.Se += 100;
+        scores.Se += Math.min(30, (logs.rabbitClicks || 0) * 3); 
+        if ((logs.attackTime || 0) > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
+        if ((logs.seChessDist || 0) < 30) scores.Se += 20;
+        if ((logs.escapeTime || 0) >= 5000) scores.Se += 15;
+        if ((logs.bugClicks || 0) >= 30) scores.Se += 100;
 
         // ★ Te: 効率と処理 (早いほど高得点) ★
-        if (logs.fixClockTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime / 200));
-        if (logs.obstacleTime > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime / 200));
-        if (logs.taskTime > 0) scores.Te += Math.max(0, 35 - Math.floor(logs.taskTime / 150));
-        if (logs.attackTime > 0) scores.Te += Math.max(0, 20 - Math.floor(logs.attackTime / 200));
+        if ((logs.fixClockTime || 0) > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime / 200));
+        if ((logs.obstacleTime || 0) > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime / 200));
+        if ((logs.taskTime || 0) > 0) scores.Te += Math.max(0, 35 - Math.floor(logs.taskTime / 150));
+        if ((logs.attackTime || 0) > 0) scores.Te += Math.max(0, 20 - Math.floor(logs.attackTime / 200));
         if (logs.letterAction === "ignored") scores.Te += 15;
 
         // ★ Si: 快適さと微調整 ★
-        scores.Si += Math.min(20, logs.siMicroMovements * 2); 
-        if (logs.teaError <= 3) scores.Si += 20; 
-        if (Math.abs(logs.frameError) <= 2) scores.Si += 10; 
-        if (logs.niFocus < 33) scores.Si += 15; 
-        if (logs.scaleGrow === 0 && logs.scaleShrink === 0) scores.Si += 10; 
+        scores.Si += Math.min(20, (logs.siMicroMovements || 0) * 2); 
+        if ((logs.teaError || 100) <= 3) scores.Si += 20; 
+        if (Math.abs(logs.frameError || 100) <= 2) scores.Si += 10; 
+        if ((logs.niFocus || 50) < 33) scores.Si += 15; 
+        if ((logs.scaleGrow || 0) === 0 && (logs.scaleShrink || 0) === 0) scores.Si += 10; 
 
         // ★ Fi: 個人的価値と防衛 ★
-        if (logs.rosesPainted === 1) scores.Fi += 20; 
+        if ((logs.rosesPainted || 0) === 1) scores.Fi += 20; 
         if (logs.letterAction === "trashed") scores.Fi += 25; 
         if (logs.choice === '👒') scores.Fi += 15;
-        if (logs.boundaryAction === 'drawn' && logs.boundaryX < 150) scores.Fi += 20; 
+        if (logs.boundaryAction === 'drawn' && (logs.boundaryX || 200) < 150) scores.Fi += 20; 
 
         // ★ Fe: 感情の彩りと融合 ★
-        scores.Fe += Math.floor(logs.bgmVolume * 0.4); 
-        if (logs.rosesPainted > 2) scores.Fe += (logs.rosesPainted * 5);
+        scores.Fe += Math.floor((logs.bgmVolume || 50) * 0.4); 
+        if ((logs.rosesPainted || 0) > 2) scores.Fe += (logs.rosesPainted * 5);
         if (logs.boundaryAction === 'melted') scores.Fe += 25; 
         if (logs.boundaryAction === 'removed') { scores.Fe += 15; scores.Ne += 10; } 
         if (logs.letterAction === "touched") scores.Fe += 15; 
@@ -119,7 +118,7 @@ const appData = {
             "LSE":["Te", "Se"], "IEE": ["Ne", "Fe"], "EII":["Fi", "Ni"], "SLI": ["Si", "Ti"]
         };
 
-        let rankings = [];
+        let rankings =[];
         for (const [type, funcs] of Object.entries(missionMap)) {
             const currentScore = Math.round((scores[funcs[0]] * 1.5) + scores[funcs[1]]);
             rankings.push({
@@ -131,14 +130,14 @@ const appData = {
         rankings.sort((a, b) => b.matchScore - a.matchScore);
 
         // ★ SLEパパ特別ルート ★
-        if (logs.bugClicks >= 30) { 
+        if ((logs.bugClicks || 0) >= 30) { 
             const sleIndex = rankings.findIndex(r => r.type === "SLE");
             if (sleIndex > -1) {
                 const sleObj = rankings.splice(sleIndex, 1)[0];
                 sleObj.matchScore = 999; 
                 rankings.unshift(sleObj);
             }
-        } // ← 【修正箇所】ここで確実にカッコを閉じる！
+        } 
 
         return { key: rankings[0].type, scores: scores, topPair: rankings[0].pair, rankings: rankings };
     }
