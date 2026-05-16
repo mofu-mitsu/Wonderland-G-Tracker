@@ -81,11 +81,13 @@ const appData = {
         scores.Se += Math.min(30, (logs.rabbitClicks || 0) * 3); 
         if ((logs.attackTime || 0) > 0) scores.Se += Math.max(0, 40 - Math.floor(logs.attackTime/100));
         if ((logs.seChessDist || 0) < 30) scores.Se += 20;
-        if ((logs.escapeTime || 0) >= 5000) scores.Se += 15;
+        // ④ 逃走成功：生き残っても +5点（あくまで補助的なSe）。
+        if ((logs.escapeTime || 0) >= 5000) scores.Se += 10;
         if ((logs.bugClicks || 0) >= 30) scores.Se += 100;
         if (logs.isCornered) scores.Se += 30; // ★新：トランプを四隅に置く(領域支配)
-        if (logs.commandTime > 0) scores.Se += Math.max(0, 30 - Math.floor(logs.commandTime/300)); // ★新：兵士の招集
-
+        if ((logs.commandTime || 0) > 0) {
+            scores.Se += Math.max(0, 15 - Math.floor(logs.commandTime / 400));
+        }
         // ★ Te: 効率と処理 (早いほど高得点) ★
         if ((logs.fixClockTime || 0) > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime / 200));
         if ((logs.obstacleTime || 0) > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.obstacleTime / 200));
