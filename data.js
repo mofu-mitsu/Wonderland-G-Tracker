@@ -19,7 +19,7 @@ const appData = {
         { id: 'p17', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: 'クッキーの座布団を一番しっくりくる位置に微調整して。' },
         { id: 'p18', type: 'roses', title: '🌹 バラを赤く塗ろう', instruction: '白いバラをクリックして、好きな数だけ赤く塗ってね。' },
         { id: 'p19', type: 'boundary', title: '📏 心の境界線', instruction: 'バーを動かしてチェシャ猫(🐱)との心の距離を決めて。(右端に追いやってもOK)' },
-        { id: 'p20', type: 'bgm', title: '🎶 お茶会の演出', instruction: 'ドラッグでBGMテンションを上げて空間を熱狂させて！' },
+        { id: 'p20', type: 'bgm', title: '🎶 お茶会の演出', instruction: 'ドラッグでBGMテンションを上げると空間を熱狂させられるよ！' },
         { id: 'p21', type: 'chaos', title: '🌀 狂気のお茶会', instruction: 'DRINK MEボタンを押してみて…' },
         { id: 'p22', type: 'mirror', title: '🪞 鏡の国', instruction: '左右対称なペアをクリック！' },
         { id: 'p23', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '白いキャンバスを自由に撫でて、軌跡を残して！(5秒間)' },
