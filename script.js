@@ -8,7 +8,7 @@ const tracker = {
     choice: "", drawDistance: 0, chaosClicks: 0, teaTime: 0,
     letterAction: "ignored", niFocus: 50, seChessDist: 0, 
     boundaryX: 200, boundaryAction: "drawn", bgmVolume: 50,
-    startTime: 0, hoverStart: 0
+    startTime: 0, hoverStart: 0,commandTime: 0, // 兵士招集にかかった時間を記録する用
 };
 
 let currentPhaseIndex = -1; let randomizedPhases = []; let activeIntervals =[];
@@ -96,7 +96,7 @@ function loadPhase() {
         'si_tea': setupSiTeaPhase, 'si_frame': setupSiFramePhase,
         'si_cushion': setupSiCushionPhase, 'roses': setupRosesPhase, 
         'boundary': setupBoundaryPhase, 'bgm': setupBgmPhase, 'chaos': setupChaosPhase,
-        'mirror': setupMirrorPhase, 'draw': setupDrawPhase
+        'mirror': setupMirrorPhase, 'draw': setupDrawPhase,'se_command': setupSeCommandPhase,
     };
     if (setups[phase.type]) setups[phase.type]();
 }
@@ -212,59 +212,98 @@ function setupClickerPhase() { const a = document.createElement('div'); a.classN
     r.addEventListener('mousedown', hitRabbit); r.addEventListener('touchstart', hitRabbit, {passive:false});
     a.appendChild(r); mainArea.appendChild(a); activeIntervals.push(setTimeout(nextPhase, 5000)); 
 }
+function setupSeCommandPhase() {
+    const area = document.createElement('div'); 
+    area.className = 'play-area';
+    area.style.position = 'relative';
+    area.style.overflow = 'hidden';
 
+    const flag = document.createElement('div'); 
+    flag.textContent = '🚩'; 
+    flag.style.cssText = "position:absolute; left:45%; top:40%; font-size:4rem; opacity:0.5; pointer-events:none;";
+    area.appendChild(flag);
+
+    const startS = Date.now(); 
+    let fixedCount = 0;
+    const soldiers = ['🃏', '🃏', '🃏'];
+
+    soldiers.forEach((s, index) => {
+        const sol = document.createElement('div'); 
+        sol.textContent = s; 
+        sol.className = 'item';
+        sol.style.left = (10 + Math.random() * 70) + '%'; 
+        sol.style.top = (10 + Math.random() * 70) + '%';
+        sol.style.zIndex = "10";
+        
+        // 兵士が勝手にフラフラ動き回るタイマー (Se的カオス)
+        let moveIv = setInterval(() => {
+            if(sol.style.pointerEvents === 'none') return; // 固定されたら動かさない
+            let curLeft = parseFloat(sol.style.left);
+            let curTop = parseFloat(sol.style.top);
+            sol.style.left = (curLeft + (Math.random() * 6 - 3)) + '%';
+            sol.style.top = (curTop + (Math.random() * 6 - 3)) + '%';
+        }, 300); 
+        activeIntervals.push(moveIv);
+        
+        // ドラッグ機能 (スマホ・PC両対応)
+        makeDraggable(sol, area, 
+            () => updateLog("兵士を捕獲中！"), 
+            () => {
+                // ドロップ時の判定：旗（flag）と重なったか？
+                if(checkCollision(sol, flag)) {
+                    sol.style.pointerEvents = 'none'; // 操作不能にする
+                    sol.style.left = '45%'; 
+                    sol.style.top = '40%';
+                    sol.style.opacity = '0.8';
+                    fixedCount++;
+                    updateLog(`招集完了: ${fixedCount}/3`);
+                    
+                    if(fixedCount === 3) {
+                        tracker.commandTime = Date.now() - startS;
+                        updateLog(`全軍招集完了！タイム: ${tracker.commandTime}ms [Se]`);
+                        setTimeout(nextPhase, 800);
+                    }
+                }
+            }
+        );
+        area.appendChild(sol);
+    });
+
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn';
+    skipBtn.textContent = '招集を諦める';
+    skipBtn.style.cssText = "position:absolute; bottom:5px; right:5px; font-size:0.7rem; padding:5px 10px;";
+    skipBtn.onclick = nextPhase;
+    area.appendChild(skipBtn);
+
+    mainArea.appendChild(area);
+}
 function setupScalePhase() { const a = document.createElement('div'); a.style.marginTop = '20px'; const s = document.createElement('div'); s.textContent = '🍄'; s.style.fontSize = '5rem'; let sz = 5; const b1 = document.createElement('span'); b1.className = 'fa-solid fa-wine-bottle scale-btn'; b1.onclick = () => { sz--; s.style.fontSize = sz+'rem'; tracker.scaleShrink++; }; const b2 = document.createElement('span'); b2.className = 'fa-solid fa-cookie-bite scale-btn'; b2.onclick = () => { sz++; s.style.fontSize = sz+'rem'; tracker.scaleGrow++; }; const b = document.createElement('button'); b.className = 'btn'; b.textContent = '決定'; b.onclick = nextPhase; a.append(b1, s, b2); mainArea.appendChild(a); mainArea.appendChild(b); }
 function setupSortPhase() {
     const a = document.createElement('div'); a.className = 'play-area';
-    const suits = ['♠️', '♥️', '♣️', '♦️'];
-    const colors = { '♠️': 'black', '♣️': 'black', '♥️': 'red', '♦️': 'red' };
-    const cards = [];
-
+    const suits = ['♠️', '♥️', '♣️', '♦️']; const colors = { '♠️': 'black', '♣️': 'black', '♥️': 'red', '♦️': 'red' }; const cards = [];
     suits.forEach(s => {
-        const c = document.createElement('div'); 
-        c.textContent = s; 
-        c.className = 'item';
-        c.dataset.color = colors[s]; // 色を覚えさせる
-        c.style.left = Math.random() * 80 + '%'; 
-        c.style.top = Math.random() * 80 + '%';
-        
-        makeDraggable(c, a, () => { 
-            tracker.sortDrags++; 
-            updateLog(`整理中... [${tracker.sortDrags}手]`); 
-        });
-        a.appendChild(c); 
-        cards.push(c);
+        const c = document.createElement('div'); c.textContent = s; c.className = 'item'; c.dataset.color = colors[s];
+        c.style.left = Math.random() * 80 + '%'; c.style.top = Math.random() * 80 + '%';
+        makeDraggable(c, a, () => { tracker.sortDrags++; updateLog(`整理[${tracker.sortDrags}手]`); });
+        a.appendChild(c); cards.push(c);
     });
-
-    const btn = document.createElement('button'); 
-    btn.className = 'btn'; 
-    btn.textContent = '整列完了';
-
+    const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = '配置完了';
     btn.onclick = () => {
-        // 1. まず「高さ（Y座標）」が揃っているかチェック
-        const tops = cards.map(c => parseInt(c.style.top || 0));
-        const isHorizontal = (Math.max(...tops) - Math.min(...tops)) < 30;
-
-        if (isHorizontal) {
-            tracker.isAligned = true; // ここで初めて「整列フラグ」が立つ
-            updateLog("整列を確認！");
-
-            // 2. 整列している場合のみ、「赤黒の並び順」をチェック
-            const sortedCards = [...cards].sort((x, y) => parseInt(x.style.left) - parseInt(y.style.left));
-            let pattern = sortedCards.map(c => c.dataset.color).join('-');
-            
-            if (pattern === 'black-red-black-red' || pattern === 'red-black-red-black') {
-                tracker.isAlternating = true; // 「交互フラグ」も立てる！
-                updateLog("完璧な秩序：整列 ＆ 赤黒交互を検出！ [Ti]");
-            }
-        } else {
-            updateLog("整列されていません。");
-        }
-        
+        const r = a.getBoundingClientRect();
+        const positions = cards.map(c => ({ x: parseInt(c.style.left), y: parseInt(c.style.top), color: c.dataset.color }));
+        // 整列チェック
+        const tops = positions.map(p => p.y); if (Math.max(...tops) - Math.min(...tops) < 35) tracker.isAligned = true;
+        // 交互チェック
+        const sorted = [...positions].sort((a, b) => a.x - b.x);
+        let pat = sorted.map(p => p.color).join('-');
+        if (tracker.isAligned && (pat === 'black-red-black-red' || pat === 'red-black-red-black')) tracker.isAlternating = true;
+        // ★四隅チェック (Se/Te)
+        const isCorner = (p) => (p.x < 30 || p.x > 180) && (p.y < 30 || p.y > 150);
+        if (positions.every(isCorner)) { tracker.isCornered = true; updateLog("四隅の制圧を確認！[Se/Te]"); }
         nextPhase();
     };
-    mainArea.appendChild(a); 
-    mainArea.appendChild(btn);
+    mainArea.appendChild(a); mainArea.appendChild(btn);
 }
 function setupDarlingPhase() {
     const a = document.createElement('div'); a.className = 'play-area';
@@ -413,7 +452,7 @@ function showResult() {
     }
     rankingHtml += `</div>`;
 
-    const logStr = `・迷い時間: ${(tracker.choiceTime + tracker.hoverTime)/1000}秒\n・カップ移動: ${tracker.cupDrags}回\n・ウサギ捕獲: ${tracker.rabbitClicks}回\n・タスク処理: ${tracker.taskTime}ms\n・兵士撃退タイム: ${tracker.attackTime}ms\n・逃走タイム: ${tracker.escapeTime}ms\n・整列Tiフラグ: ${tracker.isAligned}\n・赤黒交互Tiフラグ: ${tracker.isAlternating}\n・手紙の扱い: ${tracker.letterAction}\n・境界線: ${tracker.boundaryAction} (${Math.round(tracker.boundaryX)}px)\n・額縁のズレ: ${Math.round(tracker.frameError)}度\n・望遠鏡ピント: ${tracker.niFocus}\n・チェス制圧: ${tracker.seChessDist}px\n・時計修理: ${tracker.fixClockTime}ms\n・岩の排除: ${tracker.obstacleTime}ms\n・お茶温度誤差: ${tracker.teaError.toFixed(1)}%\n・BGM熱量: ${tracker.bgmVolume}%\n・カオス連打: ${tracker.chaosClicks}回\n・芋虫干渉: ${tracker.bugClicks}回`;
+    const logStr = `・迷い時間: ${(tracker.choiceTime + tracker.hoverTime)/1000}秒\n・カップ移動: ${tracker.cupDrags}回\n・ウサギ捕獲: ${tracker.rabbitClicks}回\n・タスク処理: ${tracker.taskTime}ms\n・兵士撃退タイム: ${tracker.attackTime}ms\n・兵士招集: ${tracker.commandTime}ms\n・逃走タイム: ${tracker.escapeTime}ms\n・整列Tiフラグ: ${tracker.isAligned}\n・赤黒交互Tiフラグ: ${tracker.isAlternating}\n・四隅制圧Se: ${tracker.isCornered}\n・手紙の扱い: ${tracker.letterAction}\n・境界線: ${tracker.boundaryAction} (${Math.round(tracker.boundaryX)}px)\n・額縁のズレ: ${Math.round(tracker.frameError)}度\n・望遠鏡ピント: ${tracker.niFocus}\n・チェス制圧: ${tracker.seChessDist}px\n・時計修理: ${tracker.fixClockTime}ms\n・岩の排除: ${tracker.obstacleTime}ms\n・お茶温度誤差: ${tracker.teaError.toFixed(1)}%\n・BGM熱量: ${tracker.bgmVolume}%\n・カオス連打: ${tracker.chaosClicks}回\n・芋虫干渉: ${tracker.bugClicks}回`;
 
     mainArea.innerHTML = `
         <div id="result-capture-area" style="background:var(--card-bg); padding:15px; border-radius:10px; border:3px solid var(--text-dark);">
