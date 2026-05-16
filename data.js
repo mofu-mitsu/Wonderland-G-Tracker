@@ -16,13 +16,14 @@ const appData = {
         { id: 'p14', type: 'escape', title: '🏃‍♀️ 逃走劇', instruction: 'トランプ兵から5秒間逃げ切れ！' },
         { id: 'p15', type: 'si_tea', title: '🍵 お茶の温度', instruction: 'バーが動くよ！「適温(緑)」の瞬間にストップ！' },
         { id: 'p16', type: 'si_frame', title: '🖼️ 歪んだ額縁', instruction: 'ドラッグして、額縁の傾きを完全に真っ直ぐ(0度)に直して！' },
-        { id: 'p17', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: '座布団を一番しっくりくる位置に微調整して。' },
+        { id: 'p17', type: 'si_cushion', title: '🛋️ 最高の座り心地', instruction: 'クッキーの座布団を一番しっくりくる位置に微調整して。' },
         { id: 'p18', type: 'roses', title: '🌹 バラを赤く塗ろう', instruction: '白いバラをクリックして、好きな数だけ赤く塗ってね。' },
-        { id: 'p19', type: 'boundary', title: '📏 心の境界線', instruction: 'チェシャ猫(🐱)との心の距離を決めて。(右端に追いやってもOK)' },
+        { id: 'p19', type: 'boundary', title: '📏 心の境界線', instruction: 'バーを動かしてチェシャ猫(🐱)との心の距離を決めて。(右端に追いやってもOK)' },
         { id: 'p20', type: 'bgm', title: '🎶 お茶会の演出', instruction: 'ドラッグでBGMテンションを上げて空間を熱狂させて！' },
         { id: 'p21', type: 'chaos', title: '🌀 狂気のお茶会', instruction: 'DRINK MEボタンを押してみて…' },
         { id: 'p22', type: 'mirror', title: '🪞 鏡の国', instruction: '左右対称なペアをクリック！' },
-        { id: 'p23', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '白いキャンバスを自由に撫でて、軌跡を残して！(5秒間)' }
+        { id: 'p23', type: 'draw', title: '🌀 狂気のお絵描き', instruction: '白いキャンバスを自由に撫でて、軌跡を残して！(5秒間)' },
+        { id: 'p24', type: 'se_command', title: '🛡️ 兵士の招集', instruction: '動き回る3人の兵士(🃏)をドラッグして、中央の旗(🚩)に固めて制圧せよ！' },
     ],
 
     socionicsTypes: {
@@ -82,6 +83,8 @@ const appData = {
         if ((logs.seChessDist || 0) < 30) scores.Se += 20;
         if ((logs.escapeTime || 0) >= 5000) scores.Se += 15;
         if ((logs.bugClicks || 0) >= 30) scores.Se += 100;
+        if (logs.isCornered) scores.Se += 30; // ★新：トランプを四隅に置く(領域支配)
+        if (logs.commandTime > 0) scores.Se += Math.max(0, 30 - Math.floor(logs.commandTime/300)); // ★新：兵士の招集
 
         // ★ Te: 効率と処理 (早いほど高得点) ★
         if ((logs.fixClockTime || 0) > 0) scores.Te += Math.max(0, 30 - Math.floor(logs.fixClockTime / 200));
