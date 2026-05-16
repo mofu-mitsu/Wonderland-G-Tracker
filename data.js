@@ -64,10 +64,13 @@ const appData = {
         if ((logs.frameError || 100) === 0) scores.Ti += 15; 
 
         // ★ Ni: 時間と予測 ★
-        if ((logs.niFocus || 50) >= 33) {
-            scores.Ni += Math.floor((logs.niFocus || 50) * 0.4); 
+        const niVal = (logs.niFocus || 0);
+        if (niVal >= 66) {
+            // 🚀 マクロ未来ボーナス：右に振り切るほど幾何級数的に増える
+            scores.Ni += Math.floor(niVal * 1.2); // 100なら+120点！
+        } else if (niVal >= 33) {
+            scores.Ni += Math.floor(niVal * 0.6); // 60なら+36点
         }
-        if ((logs.hoverTime || 0) > 2000) scores.Ni += 15; 
         if ((logs.scaleShrink || 0) > (logs.scaleGrow || 0)) scores.Ni += 15; 
 
         // ★ Ne: 可能性とカオス (NaN対策ガード実装！) ★
