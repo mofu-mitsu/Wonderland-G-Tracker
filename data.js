@@ -4,7 +4,7 @@ const appData = {
         { id: 'p2', type: 'drag', title: '☕️ お茶会の準備', instruction: 'ティーカップを好きな場所に配置して！' },
         { id: 'p3', type: 'clicker', title: '🐇 白ウサギを追え', instruction: '逃げ回るウサギを捕まえて！(連打)' },
         { id: 'p4', type: 'scale', title: '🍄 EAT ME / DRINK ME', instruction: 'クッキー(拡大)か小瓶(縮小)で、キノコのサイズを変えて。' },
-        { id: 'p5', type: 'sort', title: '♠️ トランプの整列', instruction: '4枚のトランプを動かしてみて。(散らかしても整列させてもOK)' },
+        { id: 'p5', type: 'sort', title: '♠️ トランプの整列', instruction: '4枚のカードから『ルール性』が最も伝わる配置を作って。' },
         { id: 'p6', type: 'darling', title: '💌 ダーリンからの手紙', instruction: '手紙が届いたよ。どうする？' },
         { id: 'p7', type: 'telescope', title: '🔭 時間のピント', instruction: '望遠鏡のピントを合わせて覗いてみて。' },
         { id: 'p8', type: 'chess', title: '♟️ 盤上の制圧', instruction: '相手のキング(♚)に対して、駒(♙)をどう配置する？' },
